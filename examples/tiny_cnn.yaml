@@ -1,0 +1,26 @@
+# 超轻量配置 — 快速验证 CVLab 流程
+# 用法: cvlab train --config examples/tiny_cnn.yaml
+#
+# 用极小的 CNN + CIFAR10 在 CPU 上也能几分钟跑完
+
+model:
+  name: resnet18              # 可改为更小的模型
+  pretrained: false
+
+training:
+  epochs: 5                   # 仅 5 个 epoch，快速验证
+  batch_size: 64
+  optimizer: adam
+  lr: 0.001
+  scheduler: cosine
+
+data:
+  dataset_name: CIFAR10
+  dataset: .cvlab/data
+  input_size: [3, 32, 32]
+  num_workers: 0              # CPU 测试时建议 num_workers=0
+
+seed: 42
+
+watch:
+  log_gradients: false        # 关闭 Hook 加速

@@ -1,0 +1,40 @@
+# CVLab 完整配置示例 — CIFAR10 分类
+# 用法: cvlab train --config examples/cifar10_full.yaml
+#
+# 所有可选参数均展示，按需修改
+
+model:
+  name: resnet18              # torchvision 支持的模型名
+  pretrained: false           # 是否使用 ImageNet 预训练权重
+
+training:
+  epochs: 50                  # 训练轮数
+  batch_size: 128             # 不指定则由 BatchSizeProbe 自动探测
+  accumulation_steps: 1       # 梯度累积步数（模拟更大的 batch_size）
+  optimizer: adam             # adam / adamw / sgd
+  lr: 0.001                   # 学习率
+  weight_decay: 0.0001        # 权重衰减
+  scheduler: cosine           # cosine / step / plateau / none
+  amp: false                  # 是否启用 AMP（混合精度训练）
+  bf16: false                 # 是否启用 BF16（仅 Ampere+ GPU 支持）
+
+data:
+  dataset_name: CIFAR10       # torchvision 内置数据集名
+  dataset: .cvlab/data        # 数据集路径（内置数据集会自动下载到此目录）
+  input_size: [3, 32, 32]    # (C, H, W)
+  num_workers: 2              # DataLoader worker 数
+  pin_memory: true            # 是否启用 pin_memory（GPU 训练建议开启）
+  prefetch_factor: 2          # 预取因子
+  val_split: 0.2              # 验证集比例（仅 ImageFolder 格式有效）
+
+seed: 42
+
+checkpoint:
+  save_best_metric: val_acc   # 最优 checkpoint 的判断指标
+  save_last: true             # 是否保存最后一个 epoch
+  keep_last: 5                # 保留最近 N 个非 best/last 的 checkpoint
+
+watch:
+  log_gradients: true         # 是否记录梯度范数
+  log_activations: false      # 是否记录中间层激活值
+  log_freq: 50                # 记录频率（步数）

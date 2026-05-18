@@ -1,0 +1,50 @@
+# CVLab project local data
+.cvlab/
+
+# Claude Code session data
+.claude/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# Temp / data files
+data/
+*.data
+*.pt
+*.pth
+!examples/*.py
+examples/data/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Log files
+*.log

@@ -1,0 +1,23 @@
+# CVLab 最小配置 — CIFAR10 分类
+# 用法: cvlab train --config examples/cifar10.yaml
+#
+# batch_size 不指定时由 BatchSizeProbe 自动探测
+
+model:
+  name: resnet18
+  pretrained: false
+
+training:
+  epochs: 50
+  optimizer: adam
+  lr: 0.001
+  weight_decay: 0.0001
+  scheduler: cosine
+
+data:
+  dataset_name: CIFAR10
+  dataset: .cvlab/data
+  input_size: [3, 32, 32]
+  num_workers: 2
+
+seed: 42

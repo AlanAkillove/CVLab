@@ -1,0 +1,43 @@
+# ImageNet 风格配置 — 使用本地 ImageFolder 数据集
+# 用法: cvlab train --config examples/imagenet_style.yaml
+#
+# 适用于 ImageNet、Tiny-ImageNet、或任意按类别目录组织的图片数据集
+# 数据集目录结构:
+#   /path/to/data/
+#     train/
+#       class1/  img1.jpg ...
+#       class2/  img2.jpg ...
+#     val/  (可选，否则按 val_split 比例从 train 中划分)
+#       class1/  ...
+#       class2/  ...
+
+model:
+  name: resnet50
+  pretrained: true            # 使用 ImageNet 预训练权重
+
+training:
+  epochs: 90
+  batch_size: 256             # 根据 GPU 显存调整
+  optimizer: sgd
+  lr: 0.1                     # SGD 需要较大初始 lr
+  weight_decay: 0.0001
+  scheduler: cosine
+  amp: true                   # ImageNet 级训练建议开启 AMP
+
+data:
+  dataset: /path/to/data      # 替换为实际路径
+  input_size: [3, 224, 224]
+  num_workers: 8
+  pin_memory: true
+  val_split: 0.1
+
+seed: 42
+
+checkpoint:
+  save_best_metric: val_acc
+  save_last: true
+  keep_last: 3
+
+watch:
+  log_gradients: true
+  log_freq: 100

@@ -1,0 +1,13 @@
+[theme]
+# Swiss Design — precision, clarity, red accent
+primaryColor = "#E4002B"
+backgroundColor = "#F7F7F8"
+secondaryBackgroundColor = "#EEEEF0"
+textColor = "#1A1A1E"
+font = "sans serif"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+runOnSave = false

@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cvlab"
+version = "0.1.0"
+description = "CV实验管理平台 - 让研究者专注于模型和数据本身，而非工程琐事"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+readme = "README.md"
+authors = [{name = "CVLab Contributors"}]
+keywords = ["computer-vision", "experiment-management", "deep-learning", "pytorch"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "pillow>=10.0.0",
+    "pyyaml>=6.0",
+    "streamlit>=1.28.0",
+    "plotly>=5.15.0",
+    "jinja2>=3.1.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "pandas>=2.0.0",
+    "psutil>=5.9.0",
+    "opencv-python-headless>=4.8.0",
+    "rich>=13.0.0",
+]
+
+[project.scripts]
+cvlab = "cvlab.cli.main:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "ruff>=0.3.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/user/cvlab"
+Repository = "https://github.com/user/cvlab"
+Documentation = "https://github.com/user/cvlab#readme"
+
+[tool.uv]
+extra-index-url = ["https://download.pytorch.org/whl/cu128"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["cvlab*"]
+
+[tool.pytest.ini_options]
+testpaths = ["cvlab/tests"]
+python_files = ["test_*.py"]
+markers = [
+    "slow: 需要较长时间运行（如下载数据集、实际训练）",
+]
