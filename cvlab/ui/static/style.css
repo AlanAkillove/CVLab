@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════════════
    CVLab — Swiss Design System
    Surface: Neutral white · Accent: Swiss Red · Grid: Visible
+   Supports: Light mode, Dark mode, i18n language switcher
    ═══════════════════════════════════════════════════════ */
 
 /* ── Design Tokens ───────────────────────────────────── */
@@ -23,6 +24,43 @@
     --font-mono: "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
     --radius: 0px;
     --rule-width: 3px;
+}
+
+/* ── Dark Mode ──────────────────────────────────────── */
+[data-theme="dark"] {
+    --surface: #1A1A1E;
+    --surface-alt: #2A2A2E;
+    --surface-card: #242428;
+    --text-primary: #E4E4E7;
+    --text-secondary: #9C9CA6;
+    --text-tertiary: #6B6B73;
+    --accent: #FF4D4D;
+    --accent-hover: #FF3333;
+    --accent-subtle: rgba(255, 77, 77, 0.1);
+    --border: #3A3A3E;
+    --border-light: #2E2E32;
+    --grid-line: rgba(255, 255, 255, 0.03);
+    --success: #4CAF50;
+    --warning: #FF9800;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+        --surface: #1A1A1E;
+        --surface-alt: #2A2A2E;
+        --surface-card: #242428;
+        --text-primary: #E4E4E7;
+        --text-secondary: #9C9CA6;
+        --text-tertiary: #6B6B73;
+        --accent: #FF4D4D;
+        --accent-hover: #FF3333;
+        --accent-subtle: rgba(255, 77, 77, 0.1);
+        --border: #3A3A3E;
+        --border-light: #2E2E32;
+        --grid-line: rgba(255, 255, 255, 0.03);
+        --success: #4CAF50;
+        --warning: #FF9800;
+    }
 }
 
 /* ── Base ─────────────────────────────────────────────── */
@@ -194,6 +232,53 @@ p, li, .stMarkdown {
     background: var(--surface-alt);
     color: var(--text-secondary);
     border: 1px solid var(--border-light);
+}
+
+/* ── Language Switcher ─────────────────────────────────── */
+.lang-switcher {
+    position: fixed;
+    top: 0.5rem;
+    right: 1rem;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.lang-switcher select {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--border);
+    background: var(--surface-card);
+    color: var(--text-primary);
+    font-family: var(--font);
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.lang-switcher select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* ── Theme Toggle ───────────────────────────────────────── */
+.theme-toggle {
+    position: fixed;
+    top: 0.5rem;
+    right: 4.5rem;
+    z-index: 9999;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.theme-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
 /* ── Override Streamlit defaults ──────────────────────── */
@@ -406,4 +491,22 @@ pre, code {
     .col-2 {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
 }

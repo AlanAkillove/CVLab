@@ -9,6 +9,8 @@ import plotly.express as px
 import plotly.io as pio
 import streamlit as st
 
+from cvlab.i18n import _
+
 # ── Swiss Design Plotly Template ─────────────────────────
 
 pio.templates["swiss"] = go.layout.Template(
@@ -120,7 +122,7 @@ def plot_metric_overlay(
         )
         st.plotly_chart(fig, width='stretch', use_container_width=True)
     else:
-        st.info(f"无 {metric_key} 数据")
+        st.info(f"{_('无')} {metric_key} {_('数据')}")
 
 
 def plot_single_metric(
@@ -132,7 +134,7 @@ def plot_single_metric(
     import pandas as pd  # noqa: F811
 
     if column not in df.columns or df[column].empty:
-        st.info(f"无 {column} 数据")
+        st.info(f"{_('无')} {column} {_('数据')}")
         return
 
     fig = px.line(

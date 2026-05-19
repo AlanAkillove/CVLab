@@ -5,7 +5,7 @@
 
 from __future__ import annotations
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 # ── 核心 API ──────────────────────────────────────────────
 from cvlab.core.tracker import Tracker
@@ -48,6 +48,9 @@ from cvlab.profile.model_card import ModelProfiler, ModelCard
 
 # ── 报告 ───────────────────────────────────────────────────
 from cvlab.report.html_report import HtmlReportGenerator
+
+# ── 国际化 ─────────────────────────────────────────────────
+from cvlab.i18n import set_language, current_language, _, get_available_languages
 
 __all__ = [
     # 版本
@@ -99,4 +102,10 @@ __all__ = [
 
     # 报告
     "HtmlReportGenerator",
+
+    # 国际化
+    "set_language",
+    "current_language",
+    "_",
+    "get_available_languages",
 ]

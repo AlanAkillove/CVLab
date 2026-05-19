@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 import numpy as np
 import torch
 
-from cvlab.config.config import DEFAULT_CONFIG, config_to_json, save_config
+from cvlab.config.config import DEFAULT_CONFIG, config_to_json, save_config, merge_config
 from cvlab.core.seed import seed_everything
 from cvlab.core.types import (
     AccelerationConfig,
@@ -74,7 +74,8 @@ class Tracker:
     # ── 实验创建/加载 ──────────────────────────────────────
 
     def _create_experiment(self, config: dict, experiment_id: str | None) -> None:
-        merged = {**DEFAULT_CONFIG, **config}
+        import copy
+        merged = merge_config(copy.deepcopy(DEFAULT_CONFIG), config)
         seed = merged.get("seed", 42)
         seed_everything(seed)
 
@@ -409,7 +410,7 @@ class Tracker:
         if self._gradient_monitor:
             self._gradient_monitor.close()
         self.db.update_experiment_status(self.experiment_id, status)
-        print(f"  [CVLab] 实验 {self.experiment_id} 已完成 (status={status})")
+        logger.info("Experiment %s finished (status=%s)", self.experiment_id, status)
 
     def snapshot_dataset(self, dataset_path: str) -> None:
         """记录数据集快照（文件数、总大小），用于数据血缘追踪。
@@ -425,6 +426,6 @@ class Tracker:
         self.db.update_experiment(
             self.experiment_id,
             dataset_path=str(path.resolve()),
-            dataset_total=0,
+            dataset_total=total_size,
             dataset_files=file_count,
         )

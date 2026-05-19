@@ -10,23 +10,24 @@ from pathlib import Path
 from cvlab.cli.console import console, error, header, info, result, warning
 from cvlab.config.config import load_config, validate_config
 from cvlab.core.tracker import Tracker
+from cvlab.i18n import _
 from cvlab.train.run import train_classification
 
 
 def cmd_train(args: argparse.Namespace) -> int:
     config_path = Path(args.config)
     if not config_path.exists():
-        error(f"配置文件不存在: {config_path}")
+        error(_("配置文件不存在: {}").format(config_path))
         return 1
 
     # --resume 模式：直接运行，不经过子进程
     if args.resume:
         try:
             exp_id = train_classification(str(config_path), experiment_id=args.resume)
-            result("完成", f"实验 {exp_id}")
+            result(_("完成"), _("实验: {}").format(exp_id))
             return 0
         except Exception as e:
-            error(f"训练失败: {e}")
+            error(_("训练失败: {}").format(e))
             import traceback
             console.print(traceback.format_exc())
             return 1
@@ -55,10 +56,10 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
         return 1
 
     # 在主进程中创建实验记录，获取实验 ID
-    header("创建实验")
+    header(_("创建实验"))
     tracker = Tracker(config=config)
     exp_id = tracker.experiment_id
-    result("实验 ID", exp_id)
+    result(_("实验 ID"), exp_id)
 
     batch_size = config.get("training", {}).get("batch_size", 64)
     max_retries = 2
@@ -67,14 +68,14 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
         current_bs = batch_size if attempt == 0 else max(1, batch_size // (2 ** attempt))
 
         if attempt > 0:
-            warning(f"OOM 恢复: 第 {attempt} 次重试, batch_size={current_bs}")
+            warning(_("OOM 恢复: 第 {} 次重试, batch_size={}").format(attempt, current_bs))
             tracker.db.update_experiment_status(
                 exp_id, "running",
                 failure_reason=f"OOM retry #{attempt}, batch_size={current_bs}",
             )
 
         # 子进程继承父进程 stdout/stderr，保证 Rich 输出正常显示
-        info(f"启动训练子进程 (attempt {attempt + 1}/{max_retries + 1})")
+        info(_("启动训练子进程 (attempt {}/{})").format(attempt + 1, max_retries + 1))
         proc = subprocess.run(
             [
                 sys.executable, "-m", "cvlab.train.subprocess_worker",
@@ -85,7 +86,7 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
         )
 
         if proc.returncode == 0:
-            result("完成", f"实验 {exp_id}")
+            result(_("完成"), _("实验: {}").format(exp_id))
             return 0
 
         # OOM 检测（依赖子进程返回码，worker 已处理 CUDA OOM → 137）
@@ -95,13 +96,13 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
 
         # 不可恢复的错误
         if is_oom:
-            msg = f"训练失败 (OOM, 已重试 {max_retries} 次)"
+            msg = _("训练失败 (OOM, 已重试 {} 次)").format(max_retries)
             error(msg)
             tracker.db.update_experiment_status(
                 exp_id, "failed", failure_reason="OOM after retries",
             )
         else:
-            msg = f"训练失败 (exit code {proc.returncode})"
+            msg = _("训练失败 (exit code {})").format(proc.returncode)
             error(msg)
             tracker.db.update_experiment_status(
                 exp_id, "failed", failure_reason=f"exit code {proc.returncode}",
@@ -112,12 +113,12 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
 
 
 def add_subparser(sub) -> None:
-    p = sub.add_parser("train", help="执行分类训练")
-    p.add_argument("--config", "-c", required=True, help="配置文件路径")
-    p.add_argument("--resume", help="从指定实验恢复训练")
-    p.add_argument("--seed", type=int, help="覆盖随机种子")
-    p.add_argument("--batch-size", type=int, help="覆盖 Batch Size")
-    p.add_argument("--epochs", type=int, help="覆盖训练轮数")
-    p.add_argument("--lr", type=float, help="覆盖学习率")
-    p.add_argument("--name", help="覆盖实验名称")
+    p = sub.add_parser("train", help=_("执行分类训练"))
+    p.add_argument("--config", "-c", required=True, help=_("配置文件路径"))
+    p.add_argument("--resume", help=_("从指定实验恢复训练"))
+    p.add_argument("--seed", type=int, help=_("覆盖随机种子"))
+    p.add_argument("--batch-size", type=int, help=_("覆盖 Batch Size"))
+    p.add_argument("--epochs", type=int, help=_("覆盖训练轮数"))
+    p.add_argument("--lr", type=float, help=_("覆盖学习率"))
+    p.add_argument("--name", help=_("覆盖实验名称"))
     p.set_defaults(func=cmd_train)

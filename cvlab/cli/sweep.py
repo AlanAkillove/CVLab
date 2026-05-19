@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from cvlab.i18n import _
 from cvlab.cli.console import header, info, result, table
 from cvlab.config.config import load_config
 from cvlab.sweep.sweeper import Sweeper
@@ -17,7 +18,7 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         return _cmd_analyze(args)
     else:
         from cvlab.cli.console import error
-        error("请指定 sweep 子命令: create 或 analyze")
+        error(_("请指定 sweep 子命令: create 或 analyze"))
         return 1
 
 
@@ -25,10 +26,10 @@ def _cmd_create(args: argparse.Namespace) -> int:
     config_path = Path(args.config)
     if not config_path.exists():
         from cvlab.cli.console import error
-        error(f"Sweep 配置文件不存在: {config_path}")
+        error(_("Sweep 配置文件不存在: {}").format(config_path))
         return 1
 
-    header("加载 Sweep 配置")
+    header(_("加载 Sweep 配置"))
     config = load_config(str(config_path))
     sweep_cfg = config.get("_sweep", {})
 
@@ -41,8 +42,8 @@ def _cmd_create(args: argparse.Namespace) -> int:
         strategy = sweep_cfg.get("strategy", "grid")
         base_config = config
 
-    info(f"策略: {strategy}")
-    info(f"参数: {list(params.keys())}")
+    info(_("策略: {}").format(strategy))
+    info(_("参数: {}").format(list(params.keys())))
 
     sweeper = Sweeper()
     seed = args.seed or config.get("seed")
@@ -58,12 +59,12 @@ def _cmd_create(args: argparse.Namespace) -> int:
     )
     result("Sweep ID", sweep_id)
 
-    header("Trial 列表")
+    header(_("Trial 列表"))
     trials = sweeper.get_trials(sweep_id)
     rows = [[t["trial_index"], t["experiment_id"][:16], t.get("status", "pending")]
             for t in trials]
-    table("", ["Trial", "实验 ID", "状态"], rows)
-    result("总计", f"{len(trials)} trials")
+    table("", ["Trial", _("实验 ID"), _("状态")], rows)
+    result(_("总计"), _("{} trials").format(len(trials)))
 
     return 0
 
@@ -76,40 +77,40 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
     try:
         imp = analyze_importance(args.sweep_id, target_metric=args.metric)
     except ValueError as e:
-        error(f"分析失败: {e}")
+        error(_("分析失败: {}").format(e))
         return 1
 
-    header(f"超参重要性分析: {args.sweep_id}")
-    result("目标指标", imp.target_metric)
-    result("分析实验数", f"{imp.total_trials}")
+    header(_("超参重要性分析: {}").format(args.sweep_id))
+    result(_("目标指标"), imp.target_metric)
+    result(_("分析实验数"), str(imp.total_trials))
 
-    header("重要性排序")
+    header(_("重要性排序"))
     bar_width = 30
     rows = []
     for i, (name, score) in enumerate(imp.importances.items()):
         filled = int(score * bar_width)
         bar = "█" * filled + "░" * (bar_width - filled)
         rows.append([str(i + 1), name[:40], bar, f"{score * 100:.0f}%"])
-    table("", ["#", "超参", "重要性", "分数"], rows)
+    table("", ["#", _("超参"), _("重要性"), _("分数")], rows)
 
     for s in imp.suggestions:
-        info(f"结论: {s}")
+        info(_("结论: {}").format(s))
 
     return 0
 
 
 def add_subparser(sub) -> None:
-    p = sub.add_parser("sweep", help="超参扫描")
+    p = sub.add_parser("sweep", help=_("超参扫描"))
     sp = p.add_subparsers(dest="sweep_command")
 
-    create_p = sp.add_parser("create", help="创建并启动 Sweep")
-    create_p.add_argument("--config", "-c", required=True, help="Sweep 配置文件路径")
-    create_p.add_argument("--name", help="Sweep 名称")
-    create_p.add_argument("--seed", type=int, help="随机种子")
-    create_p.add_argument("--max-trials", type=int, help="最大 trial 数（random 模式）")
+    create_p = sp.add_parser("create", help=_("创建并启动 Sweep"))
+    create_p.add_argument("--config", "-c", required=True, help=_("Sweep 配置文件路径"))
+    create_p.add_argument("--name", help=_("Sweep 名称"))
+    create_p.add_argument("--seed", type=int, help=_("随机种子"))
+    create_p.add_argument("--max-trials", type=int, help=_("最大 trial 数（random 模式）"))
 
-    analyze_p = sp.add_parser("analyze", help="分析 Sweep 超参重要性")
+    analyze_p = sp.add_parser("analyze", help=_("分析 Sweep 超参重要性"))
     analyze_p.add_argument("sweep_id", help="Sweep ID")
-    analyze_p.add_argument("--metric", default="val/acc", help="目标指标名")
+    analyze_p.add_argument("--metric", default="val/acc", help=_("目标指标名"))
 
     p.set_defaults(func=cmd_sweep)

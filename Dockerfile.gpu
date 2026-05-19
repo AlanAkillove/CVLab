@@ -1,0 +1,39 @@
+# ── CVLab GPU Docker Image ────────────────────────────────
+# For CUDA-enabled training environments
+
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime AS builder
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN pip install --no-cache-dir uv
+
+COPY pyproject.toml README.md ./
+COPY cvlab/ cvlab/
+
+RUN uv venv /opt/venv && \
+    . /opt/venv/bin/activate && \
+    uv pip install --no-cache-dir -e .
+
+# ── Runtime ──────────────────────────────────────────────
+FROM pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime
+
+WORKDIR /workspace
+
+# Copy virtualenv from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH" \
+    PYTHONUNBUFFERED=1 \
+    CVLAB_LANG=en
+
+# Create non-root user
+RUN groupadd -r cvlab && useradd -r -g cvlab -m cvlab && \
+    chmod 755 /workspace
+
+USER cvlab
+
+ENTRYPOINT ["cvlab"]
+CMD ["help"]

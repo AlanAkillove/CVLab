@@ -1,9 +1,16 @@
-"""CVLab Streamlit 主入口 — Swiss Design。"""
+"""CVLab Streamlit main entry — Swiss Design, with i18n support.
+
+Language can be switched via:
+    - Query parameter: ?lang=en or ?lang=zh
+    - CVLAB_LANG environment variable
+    - System locale detection (fallback)
+"""
 
 from __future__ import annotations
 
 import streamlit as st
 
+from cvlab.i18n import set_language, current_language, language_selector_html, _
 from cvlab.ui.components.layout import load_css
 
 st.set_page_config(
@@ -15,6 +22,15 @@ st.set_page_config(
 
 
 def main():
+    # Detect language from query params
+    query_params = st.query_params
+    lang = query_params.get("lang", None)
+    if lang:
+        set_language(lang)
+    else:
+        # Already auto-detected via cvlab.i18n.init() on import
+        pass
+
     load_css()
 
     from cvlab.ui.pages.experiments import show_experiments
@@ -25,17 +41,17 @@ def main():
     from cvlab.ui.pages.datasets import show_datasets
 
     pages = {
-        "Experiments": [
-            st.Page(show_experiments, title="Experiments", default=True),
-            st.Page(show_experiment_detail, title="Experiment Detail"),
+        _("Experiments"): [
+            st.Page(show_experiments, title=_("Experiments"), default=True),
+            st.Page(show_experiment_detail, title=_("Experiment Detail")),
         ],
-        "Data": [
-            st.Page(show_datasets, title="Datasets"),
+        _("Data"): [
+            st.Page(show_datasets, title=_("Datasets")),
         ],
-        "Analysis": [
-            st.Page(show_compare, title="Compare"),
-            st.Page(show_sweep, title="Sweeps"),
-            st.Page(show_diagnostics, title="Diagnostics"),
+        _("Analysis"): [
+            st.Page(show_compare, title=_("Compare")),
+            st.Page(show_sweep, title=_("Sweeps")),
+            st.Page(show_diagnostics, title=_("Diagnostics")),
         ],
     }
 

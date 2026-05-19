@@ -3,6 +3,7 @@
 import tempfile
 from pathlib import Path
 
+from cvlab.core.utils import flatten_dict
 from cvlab.db.database import Database
 from cvlab.report.html_report import HtmlReportGenerator
 
@@ -47,9 +48,9 @@ class TestHtmlReportGenerator:
         assert "save_test" in html
 
     def test_flatten(self):
-        flat = HtmlReportGenerator._flatten({"a": {"b": 1, "c": 2}, "d": 3})
+        flat = flatten_dict({"a": {"b": 1, "c": 2}, "d": 3})
         assert flat == {"a.b": 1, "a.c": 2, "d": 3}
 
     def test_flatten_list(self):
-        flat = HtmlReportGenerator._flatten({"a": [1, 2, 3]})
+        flat = flatten_dict({"a": [1, 2, 3]})
         assert "a" in flat

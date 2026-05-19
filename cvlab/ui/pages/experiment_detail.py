@@ -1,4 +1,4 @@
-"""实验详情页 — Swiss Design。"""
+"""Experiment detail page — Swiss Design, i18n-ready."""
 
 from __future__ import annotations
 
@@ -8,16 +8,20 @@ import pandas as pd
 import streamlit as st
 
 from cvlab.db.database import Database
+from cvlab.i18n import _
 from cvlab.ui.components.layout import (
     section_header,
     metric_card,
     status_badge,
     tag_chip,
     divider,
+    inject_language_switcher,
+    sidebar_footer,
 )
 
 
 def show_experiment_detail():
+    inject_language_switcher()
     st.title("Experiment Detail")
 
     db = Database()
@@ -25,26 +29,29 @@ def show_experiment_detail():
 
     if not exps:
         st.markdown(
-            '<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
-            'font-size:0.9rem;">No experiments found.</div>',
+            f'<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
+            f'font-size:0.9rem;">{_("暂无实验")}.</div>',
             unsafe_allow_html=True,
         )
+        sidebar_footer()
         return
 
     exp_ids = [e["id"] for e in exps]
     selected_id = st.selectbox(
-        "Select experiment",
+        _("选择实验"),
         exp_ids,
         format_func=lambda x: f"{x} — {db.get_experiment(x)['name']}",
         key="detail_selector",
     )
 
     if not selected_id:
+        sidebar_footer()
         return
 
     exp = db.get_experiment(selected_id)
     if not exp:
-        st.error("Experiment not found")
+        st.error(_("实验不存在"))
+        sidebar_footer()
         return
 
     # ── Header ───────────────────────────────────────────
@@ -59,19 +66,19 @@ def show_experiment_detail():
     # ── Info grid ────────────────────────────────────────
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        metric_card("Status", exp["status"])
+        metric_card(_("状态"), exp["status"])
     with col2:
         metric_card("Seed", str(exp.get("seed", "—")))
     with col3:
-        metric_card("Created", exp["created_at"][:19])
+        metric_card(_("创建时间"), exp["created_at"][:19])
     with col4:
-        metric_card("Updated", exp["updated_at"][:19])
+        metric_card(_("更新于"), exp["updated_at"][:19])
 
     if exp.get("failure_reason"):
         st.markdown(
             f'<div class="metric-card" style="border-left-color:var(--accent);'
             f'background:var(--accent-subtle);">'
-            f'<div class="label">Failure Reason</div>'
+            f'<div class="label">{_("失败原因")}</div>'
             f'<div class="value" style="font-size:0.9rem;">{exp["failure_reason"]}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -86,8 +93,8 @@ def show_experiment_detail():
     divider()
 
     # ── Configuration ────────────────────────────────────
-    section_header("Configuration")
-    with st.expander("View config"):
+    section_header(_("超参配置"))
+    with st.expander(_("查看配置")):
         try:
             cfg = json.loads(exp["config_json"]) if isinstance(exp["config_json"], str) else exp["config_json"]
             st.json(cfg)
@@ -95,8 +102,8 @@ def show_experiment_detail():
             st.code(exp.get("config_json", ""), language="json")
 
     # ── Environment ──────────────────────────────────────
-    section_header("Environment")
-    with st.expander("View environment"):
+    section_header(_("环境"))
+    with st.expander(_("查看环境")):
         try:
             env = json.loads(exp.get("env_json", "{}"))
             st.json(env)
@@ -111,26 +118,26 @@ def show_experiment_detail():
     datasets_link = db.get_experiment_datasets(selected_id)
 
     if ds_path or datasets_link:
-        section_header("Dataset")
+        section_header(_("数据集"))
 
     if ds_path:
         col1, col2 = st.columns(2)
         with col1:
-            metric_card("Path", ds_path)
+            metric_card(_("路径"), ds_path)
         with col2:
-            metric_card("Files", str(ds_files) if ds_files is not None else "—")
+            metric_card(_("文件数"), str(ds_files) if ds_files is not None else "—")
 
     if datasets_link:
         for d in datasets_link:
             size_mb = d.get("total_size_bytes", 0) / (1024 * 1024)
             st.markdown(
                 f'<div class="data-card">'
-                f'<div class="card-title">{d.get("dataset_name", "Dataset")} '
+                f'<div class="card-title">{d.get("dataset_name", _("数据集"))} '
                 f'<span style="font-weight:400;">{d["version"]}</span></div>'
                 f'<div style="font-size:0.85rem;color:var(--text-secondary);">'
                 f'{d.get("dataset_path", "")}</div>'
                 f'<div style="display:flex;gap:2rem;margin-top:0.5rem;font-size:0.8rem;">'
-                f'<span>{d.get("total_files", 0)} files</span>'
+                f'<span>{d.get("total_files", 0)} {_("文件数").lower()}</span>'
                 f'<span>{size_mb:.1f} MB</span>'
                 f'<span style="font-family:var(--font-mono);font-size:0.75rem;'
                 f'color:var(--text-tertiary);">hash: {d.get("root_hash", "")[:12]}</span>'
@@ -145,7 +152,7 @@ def show_experiment_detail():
     # ── Training Metrics ─────────────────────────────────
     metrics = db.get_metrics(selected_id)
     if metrics:
-        section_header("Training Metrics")
+        section_header(_("训练指标"))
         df = db.get_metrics_dataframe(selected_id)
         if df is not None and not df.empty:
             from cvlab.ui.components.charts import plot_single_metric
@@ -159,9 +166,8 @@ def show_experiment_detail():
     # ── Checkpoints ──────────────────────────────────────
     ckpts = db.get_checkpoints(selected_id)
     if ckpts:
-        section_header("Checkpoints", badge=str(len(ckpts)))
+        section_header(_("Checkpoints"), badge=str(len(ckpts)))
         ckpt_df = pd.DataFrame(ckpts)
-        # Drop columns that are all NaN or uninteresting for display
         display_cols = [c for c in ["epoch", "metric_name", "metric_value", "is_best", "file_size"]
                         if c in ckpt_df.columns]
         if display_cols:
@@ -175,7 +181,7 @@ def show_experiment_detail():
     # ── Artifacts ────────────────────────────────────────
     artifacts = db.get_artifacts(selected_id)
     if artifacts:
-        section_header("Artifacts", badge=str(len(artifacts)))
+        section_header(_("Artifacts"), badge=str(len(artifacts)))
         for art in artifacts:
             label = f"{art['key']} — step {art['step']}"
             with st.expander(label):
@@ -189,5 +195,7 @@ def show_experiment_detail():
     exp_command = exp.get("command") or ""
     if exp_command:
         divider()
-        section_header("Reproduction")
+        section_header(_("复现命令"))
         st.code(exp_command, language="bash")
+
+    sidebar_footer()

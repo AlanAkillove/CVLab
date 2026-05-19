@@ -57,7 +57,8 @@ def _get_driver_version() -> str:
         import subprocess
         result = subprocess.run(
             ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
-            capture_output=True, text=True, timeout=5
+            capture_output=True, text=True, timeout=5,
+            encoding="utf-8", errors="replace",
         )
         version = result.stdout.strip()
         return version if version else ""
@@ -81,6 +82,7 @@ def check_cuda_mismatch() -> tuple[bool, str]:
         result = subprocess.run(
             ["nvidia-smi", "--query-gpu=driver_version", "--format=csv,noheader"],
             capture_output=True, text=True, timeout=5,
+            encoding="utf-8", errors="replace",
         )
         driver_ver = result.stdout.strip()
         return False, f"PyTorch CUDA: {torch_cuda}, Driver: {driver_ver}"

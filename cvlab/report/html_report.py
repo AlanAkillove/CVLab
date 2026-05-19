@@ -10,6 +10,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
+from cvlab.core.utils import flatten_dict
 from cvlab.db.database import Database
 
 
@@ -60,7 +61,7 @@ class HtmlReportGenerator:
         if exp.get("config_json"):
             try:
                 config = json.loads(exp["config_json"])
-                flat_config = self._flatten(config)
+                flat_config = flatten_dict(config)
             except json.JSONDecodeError:
                 flat_config = {"raw": exp["config_json"]}
 
@@ -69,7 +70,7 @@ class HtmlReportGenerator:
         if exp.get("env_json"):
             try:
                 env_info = json.loads(exp["env_json"])
-                env_info = self._flatten(env_info)
+                env_info = flatten_dict(env_info)
             except json.JSONDecodeError:
                 env_info = {"raw": exp["env_json"]}
 
@@ -101,17 +102,3 @@ class HtmlReportGenerator:
         path = Path(output_path)
         path.write_text(html, encoding="utf-8")
         return path
-
-    @staticmethod
-    def _flatten(d: dict[str, Any], prefix: str = "") -> dict[str, Any]:
-        """嵌套字典展平为点号分隔键值对。"""
-        result: dict[str, Any] = {}
-        for k, v in d.items():
-            key = f"{prefix}.{k}" if prefix else k
-            if isinstance(v, dict):
-                result.update(HtmlReportGenerator._flatten(v, key))
-            elif isinstance(v, (list, tuple)):
-                result[key] = json.dumps(v)
-            else:
-                result[key] = v
-        return result

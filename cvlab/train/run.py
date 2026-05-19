@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
+from cvlab.i18n import _
 from cvlab.cli.console import console, header, info, progress, result, success, warning
 from cvlab.config.config import load_config, validate_config
 from cvlab.core.seed import seed_everything
@@ -30,7 +31,7 @@ def train_classification(config_path: str,
         实验 ID。
     """
     # 配置加载
-    header("加载配置")
+    header(_("加载配置"))
     config = load_config(config_path)
     if batch_size is not None:
         config.setdefault("training", {})["batch_size"] = batch_size
@@ -38,51 +39,51 @@ def train_classification(config_path: str,
     if errors:
         for e in errors:
             console.print(f"  [red][FAIL][/red] {e}")
-        raise ValueError(f"配置验证失败: {errors}")
-    info(f"模型: {config['model']['name']}")
-    info(f"Epochs: {config['training']['epochs']}")
+        raise ValueError(_("配置验证失败: {}").format(errors))
+    info(_("模型: {}").format(config['model']['name']))
+    info(_("Epochs: {}").format(config['training']['epochs']))
 
     # 种子
     seed = config.get("seed", 42)
     seed_everything(seed)
 
     # 设备检测
-    header("设备检测")
+    header(_("设备检测"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if device.type == "cuda":
         gpu_name = torch.cuda.get_device_properties(0).name
-        info(f"GPU: {gpu_name} ({torch.cuda.get_device_properties(0).total_memory / 1024**3:.1f} GB)")
+        info(_("GPU: {} ({:.1f} GB)").format(gpu_name, torch.cuda.get_device_properties(0).total_memory / 1024**3))
     else:
-        info("CPU 模式")
-    result("设备", str(device))
+        info(_("CPU 模式"))
+    result(_("设备"), str(device))
 
     # 创建或加载实验
-    header("实验")
+    header(_("实验"))
     if experiment_id:
         tracker = Tracker(experiment_id=experiment_id, resume=True)
         tracker.db.update_experiment_status(experiment_id, "running")
-        info(f"恢复实验 {experiment_id}")
-        info(f"目录: {tracker.exp_dir}")
+        info(_("恢复实验 {}").format(experiment_id))
+        info(_("目录: {}").format(tracker.exp_dir))
     else:
         tracker = Tracker(config=config)
         tracker.db.update_experiment(tracker.experiment_id,
                                      command=f"cvlab train --config {config_path}")
-        result("实验 ID", tracker.experiment_id)
-        info(f"目录: {tracker.exp_dir}")
+        result(_("实验 ID"), tracker.experiment_id)
+        info(_("目录: {}").format(tracker.exp_dir))
 
     # 数据加载
-    header("数据加载")
+    header(_("数据加载"))
     train_loader, val_loader, class_names = _load_data(config)
-    result("训练集", f"{len(train_loader.dataset)} 样本, {len(train_loader)} batches/epoch")
-    result("验证集", f"{len(val_loader.dataset)} 样本, {len(val_loader)} batches/epoch")
+    result(_("训练集"), _("{} 样本, {} batches/epoch").format(len(train_loader.dataset), len(train_loader)))
+    result(_("验证集"), _("{} 样本, {} batches/epoch").format(len(val_loader.dataset), len(val_loader)))
     num_classes = len(class_names)
 
     # 模型创建
-    header("模型创建")
+    header(_("模型创建"))
     model = _create_model(config, num_classes, device)
-    result("模型", config["model"]["name"])
+    result(_("模型"), config["model"]["name"])
     total_params = sum(p.numel() for p in model.parameters())
-    result("参数量", f"{total_params / 1e6:.2f}M")
+    result(_("参数量"), f"{total_params / 1e6:.2f}M")
 
     # Batch Size 自动探测（配置中未指定时）
     if config.get("training", {}).get("batch_size") is None:
@@ -92,9 +93,9 @@ def train_classification(config_path: str,
         probe = BatchSizeProbe(model, tuple(input_size), config, num_gpus=num_gpus)
         probe_result = probe.probe()
         config["training"]["batch_size"] = probe_result.recommended_batch_size
-        result("推荐 Batch Size", probe_result.recommended_batch_size)
+        result(_("推荐 Batch Size"), probe_result.recommended_batch_size)
     else:
-        result("Batch Size", config["training"]["batch_size"])
+        result(_("Batch Size"), config["training"]["batch_size"])
 
     # Hook 注入
     watch_cfg = config.get("watch", {})
@@ -106,7 +107,7 @@ def train_classification(config_path: str,
             watch_layers=watch_cfg.get("watch_layers"),
             log_freq=watch_cfg.get("log_freq", 50),
         )
-        info("梯度监控已注入")
+        info(_("梯度监控已注入"))
 
     # 优化器
     optimizer = _create_optimizer(model, config)
@@ -116,9 +117,9 @@ def train_classification(config_path: str,
     criterion = nn.CrossEntropyLoss()
 
     # 训练循环
-    header("训练开始")
+    header(_("训练开始"))
     pbar = progress()
-    epoch_task = pbar.add_task("Epochs", total=config["training"]["epochs"])
+    epoch_task = pbar.add_task(_("Epochs"), total=config["training"]["epochs"])
     best_acc = 0.0
 
     with pbar:
@@ -128,7 +129,7 @@ def train_classification(config_path: str,
             train_loss, train_acc = _train_epoch(
                 model, train_loader, criterion, optimizer, device,
                 scheduler=scheduler, epoch=epoch,
-                pbar=pbar, batch_desc=f"  Epoch {epoch+1}",
+                pbar=pbar, batch_desc=_("  Epoch {}").format(epoch+1),
             )
 
             val_loss, val_acc = _validate(model, val_loader, criterion, device)
@@ -159,32 +160,31 @@ def train_classification(config_path: str,
 
             pbar.update(epoch_task, advance=1)
             console.print(
-                f"  Epoch {epoch+1:3d}/{config['training']['epochs']:3d} | "
-                f"train loss: {train_loss:.4f} | "
-                f"train acc: {train_acc:.2f}% | "
-                f"val acc: {val_acc:.2f}% | "
-                f"lr: {optimizer.param_groups[0]['lr']:.2e} | "
-                f"{epoch_time:.1f}s"
+                _("  Epoch {:3d}/{:3d} | train loss: {:.4f} | train acc: {:.2f}% | val acc: {:.2f}% | lr: {:.2e} | {:.1f}s").format(
+                    epoch + 1, config['training']['epochs'],
+                    train_loss, train_acc, val_acc,
+                    optimizer.param_groups[0]['lr'],
+                    epoch_time)
             )
 
     tracker.finish("completed")
 
     # 生成报告
-    header("报告生成")
+    header(_("报告生成"))
     try:
         from cvlab.report.html_report import HtmlReportGenerator
         gen = HtmlReportGenerator(db=tracker.db)
         report_path = Path.cwd() / f"{tracker.experiment_id}.html"
         gen.save(tracker.experiment_id, str(report_path))
-        result("报告", str(report_path))
+        result(_("报告"), str(report_path))
     except Exception as e:
-        warning(f"报告生成失败: {e}")
+        warning(_("报告生成失败: {}").format(e))
 
     # 展示最终结果
-    header("训练完成")
-    result("实验", tracker.experiment_id)
-    result("最佳验证准确率", f"{best_acc:.2f}%")
-    result("状态", "completed")
+    header(_("训练完成"))
+    result(_("实验"), tracker.experiment_id)
+    result(_("最佳验证准确率"), f"{best_acc:.2f}%")
+    result(_("状态"), "completed")
 
     return tracker.experiment_id
 
@@ -225,7 +225,7 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
             import torchvision.datasets as datasets
             ds_cls = getattr(datasets, dataset_name, None)
             if ds_cls is None:
-                raise ValueError(f"未知数据集: {dataset_name}")
+                raise ValueError(_("未知数据集: {}").format(dataset_name))
 
             root = Path(dataset_path) if dataset_path else Path(".cvlab/data")
             root.mkdir(parents=True, exist_ok=True)
@@ -240,7 +240,7 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
                                      num_workers=num_workers, pin_memory=pin_memory)
             return train_loader, val_loader, class_names
         except Exception as e:
-            raise RuntimeError(f"内置数据集 '{dataset_name}' 加载失败: {e}")
+            raise RuntimeError(_("内置数据集 '{}' 加载失败: {}").format(dataset_name, e))
 
     # ImageFolder 格式
     if dataset_path:
@@ -249,7 +249,7 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
 
         root = Path(dataset_path)
         if not root.exists():
-            raise FileNotFoundError(f"数据集路径不存在: {root}")
+            raise FileNotFoundError(_("数据集路径不存在: {}").format(root))
 
         full_dataset = ImageFolder(str(root), transform=train_transform)
         class_names = full_dataset.classes
@@ -265,7 +265,7 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
                                  num_workers=num_workers, pin_memory=pin_memory)
         return train_loader, val_loader, class_names
 
-    raise ValueError("配置中需要指定 data.dataset 路径或 data.dataset_name")
+    raise ValueError(_("配置中需要指定 data.dataset 路径或 data.dataset_name"))
 
 
 def _create_model(config: dict, num_classes: int, device: torch.device) -> nn.Module:
@@ -281,10 +281,10 @@ def _create_model(config: dict, num_classes: int, device: torch.device) -> nn.Mo
     try:
         builder = getattr(models, model_name, None)
         if builder is None:
-            raise ValueError(f"不支持的模型: {model_name}")
+            raise ValueError(_("不支持的模型: {}").format(model_name))
         model = builder(weights=weights)
     except Exception as e:
-        raise ValueError(f"模型 '{model_name}' 创建失败: {e}")
+        raise ValueError(_("模型 '{}' 创建失败: {}").format(model_name, e))
 
     # 替换分类头
     if hasattr(model, "fc"):
@@ -315,7 +315,7 @@ def _create_optimizer(model: nn.Module, config: dict) -> torch.optim.Optimizer:
     elif opt_name == "sgd":
         return torch.optim.SGD(model.parameters(), lr=lr, weight_decay=wd, momentum=0.9)
     else:
-        raise ValueError(f"不支持的优化器: {opt_name}")
+        raise ValueError(_("不支持的优化器: {}").format(opt_name))
 
 
 def _create_scheduler(optimizer: torch.optim.Optimizer,
@@ -339,7 +339,7 @@ def _create_scheduler(optimizer: torch.optim.Optimizer,
     elif sched_name == "none":
         return None
     else:
-        raise ValueError(f"不支持的 scheduler: {sched_name}")
+        raise ValueError(_("不支持的 scheduler: {}").format(sched_name))
 
 
 def _train_epoch(

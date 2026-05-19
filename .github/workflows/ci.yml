@@ -2,28 +2,85 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".github/**"
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  FORCE_COLOR: "1"
+  CVLAB_LANG: "en"
 
 jobs:
-  test:
+  lint:
+    name: Lint & Format
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
-
     steps:
       - uses: actions/checkout@v4
-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
-
-      - name: Set up Python ${{ matrix.python-version }}
-        run: uv python install ${{ matrix.python-version }}
-
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Install dependencies
-        run: uv sync --group dev
+        run: |
+          uv venv
+          uv sync --dev
+      - name: Check ruff
+        run: uv run ruff check cvlab/
+      - name: Check formatting
+        run: uv run ruff format --check cvlab/
 
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv sync --dev
+      - name: Install PyTorch (CPU)
+        run: |
+          uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
       - name: Run tests
-        run: uv run pytest cvlab/tests/ -q --no-header --ignore=cvlab/tests/test_cli_integration.py -p no:warnings
+        run: uv run pytest cvlab/tests/ -v --tb=short -x
+      - name: Run smoke test
+        run: |
+          uv run python -c "from cvlab import Tracker; print('CVLab import OK')"
+
+  docker:
+    name: Docker Build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Docker image
+        run: docker build -t cvlab:ci -f Dockerfile .
+      - name: Verify image
+        run: docker run --rm cvlab:ci python -c "from cvlab import __version__; print(f'CVLab {__version__}')"

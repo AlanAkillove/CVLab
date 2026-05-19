@@ -17,7 +17,7 @@ def _get_cpu_model() -> str:
     """获取 CPU 型号名称。"""
     try:
         if os.name == "posix":
-            with open("/proc/cpuinfo", "r") as f:
+            with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
                 for line in f:
                     if line.startswith("model name"):
                         return line.split(":")[1].strip()
@@ -25,7 +25,8 @@ def _get_cpu_model() -> str:
             import subprocess
             result = subprocess.run(
                 ["wmic", "cpu", "get", "name"],
-                capture_output=True, text=True, timeout=5
+                capture_output=True, text=True, timeout=5,
+                encoding="utf-8", errors="replace",
             )
             lines = result.stdout.strip().split("\n")
             if len(lines) >= 2:

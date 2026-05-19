@@ -1,18 +1,25 @@
-"""实验对比页 — Swiss Design。"""
+"""Experiment comparison page — Swiss Design, i18n-ready."""
 
 from __future__ import annotations
 
 import json
-from typing import Any
 
 import pandas as pd
 import streamlit as st
 
+from cvlab.core.utils import flatten_dict
 from cvlab.db.database import Database
-from cvlab.ui.components.layout import section_header, metric_card, divider
+from cvlab.i18n import _
+from cvlab.ui.components.layout import (
+    section_header,
+    divider,
+    inject_language_switcher,
+    sidebar_footer,
+)
 
 
 def show_compare():
+    inject_language_switcher()
     st.title("Compare")
 
     db = Database()
@@ -20,15 +27,16 @@ def show_compare():
 
     if not exps or len(exps) < 2:
         st.markdown(
-            '<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
-            'font-size:0.9rem;">Need at least 2 experiments to compare.</div>',
+            f'<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
+            f'font-size:0.9rem;">{_("至少选择 2 个实验")}</div>',
             unsafe_allow_html=True,
         )
+        sidebar_footer()
         return
 
     exp_ids = [e["id"] for e in exps]
     selected = st.multiselect(
-        "Select experiments (2–4)",
+        _("选择实验"),
         exp_ids,
         default=exp_ids[: min(2, len(exp_ids))],
         format_func=lambda x: f"{x} — {db.get_experiment(x)['name']}",
@@ -36,25 +44,26 @@ def show_compare():
     )
 
     if len(selected) < 2:
-        st.info("Select at least 2 experiments")
+        st.info(_("至少选择 2 个实验"))
+        sidebar_footer()
         return
 
     if len(selected) > 4:
-        st.warning("Max 4 experiments")
+        st.warning(_("最多 4 个实验"))
         selected = selected[:4]
 
     # ── Overview table ──────────────────────────────────
-    section_header("Overview")
+    section_header(_("概览"))
     info_rows = []
     for eid in selected:
         exp = db.get_experiment(eid)
         if exp:
             info_rows.append({
-                "ID": eid,
-                "Name": exp["name"],
-                "Status": exp["status"],
+                _("ID"): eid,
+                _("名称"): exp["name"],
+                _("状态"): exp["status"],
                 "Seed": exp.get("seed", "—"),
-                "Created": exp["created_at"][:19] if exp.get("created_at") else "",
+                _("创建时间"): exp["created_at"][:19] if exp.get("created_at") else "",
             })
 
     if info_rows:
@@ -64,9 +73,9 @@ def show_compare():
     divider()
 
     # ── Config comparison ────────────────────────────────
-    section_header("Configuration")
+    section_header(_("配置对比"))
 
-    configs: list[dict[str, Any]] = []
+    configs: list[dict[str, str]] = []
     config_keys: set[str] = set()
     for eid in selected:
         exp = db.get_experiment(eid)
@@ -76,14 +85,14 @@ def show_compare():
             cfg = json.loads(exp["config_json"]) if isinstance(exp["config_json"], str) else exp["config_json"]
         except (json.JSONDecodeError, TypeError):
             continue
-        flat = _flatten_dict(cfg)
+        flat = flatten_dict(cfg)
         configs.append(flat)
         config_keys.update(flat.keys())
 
     if configs:
         config_rows = []
         for key in sorted(config_keys):
-            row: dict[str, str] = {"Parameter": key}
+            row: dict[str, str] = {_("参数"): key}
             for i, eid in enumerate(selected):
                 row[eid[:16]] = str(configs[i].get(key, "—")) if i < len(configs) else "—"
             config_rows.append(row)
@@ -93,7 +102,7 @@ def show_compare():
     divider()
 
     # ── Metric overlay ──────────────────────────────────
-    section_header("Metrics")
+    section_header(_("指标叠加"))
 
     metrics_by_exp: dict[str, pd.DataFrame] = {}
     all_metric_keys: set[str] = set()
@@ -104,7 +113,8 @@ def show_compare():
             all_metric_keys.update(df.columns.tolist())
 
     if not all_metric_keys:
-        st.info("No metric data for selected experiments")
+        st.info(_("暂无实验"))
+        sidebar_footer()
         return
 
     from cvlab.ui.components.charts import plot_metric_overlay
@@ -115,7 +125,7 @@ def show_compare():
     divider()
 
     # ── Summary table ────────────────────────────────────
-    section_header("Summary")
+    section_header(_("汇总"))
 
     summary_rows = []
     for eid in selected:
@@ -133,16 +143,4 @@ def show_compare():
         st.dataframe(pd.DataFrame(summary_rows), width='stretch', hide_index=True,
                      use_container_width=True)
 
-
-def _flatten_dict(d: dict, prefix: str = "") -> dict[str, Any]:
-    """展平嵌套字典为点号分隔键值对。"""
-    result: dict[str, Any] = {}
-    for k, v in d.items():
-        key = f"{prefix}.{k}" if prefix else k
-        if isinstance(v, dict):
-            result.update(_flatten_dict(v, key))
-        elif isinstance(v, list):
-            result[key] = json.dumps(v)
-        else:
-            result[key] = v
-    return result
+    sidebar_footer()

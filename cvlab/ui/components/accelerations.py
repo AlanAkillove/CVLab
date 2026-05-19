@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from cvlab.detect.probe import EnvironmentProbe, AccelerationPanel
+from cvlab.detect.probe import AccelerationPanel
 
 
 def show_acceleration_panel(panel: AccelerationPanel) -> None:

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cvlab"
-version = "0.1.0"
-description = "CV实验管理平台 - 让研究者专注于模型和数据本身，而非工程琐事"
+version = "0.2.0"
+description = "CVLab - CV Experiment Management Platform"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 readme = "README.md"
@@ -46,12 +46,18 @@ dev = [
     "pytest>=7.0",
     "pytest-cov",
     "ruff>=0.3.0",
+    "mypy>=1.8.0",
+    "pre-commit>=3.0.0",
+]
+gpu = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
 ]
 
 [project.urls]
-Homepage = "https://github.com/user/cvlab"
-Repository = "https://github.com/user/cvlab"
-Documentation = "https://github.com/user/cvlab#readme"
+Homepage = "https://github.com/AlanAkillove/CVLab"
+Repository = "https://github.com/AlanAkillove/CVLab"
+Documentation = "https://github.com/AlanAkillove/CVLab#readme"
 
 [tool.uv]
 extra-index-url = ["https://download.pytorch.org/whl/cu128"]
@@ -60,9 +66,80 @@ extra-index-url = ["https://download.pytorch.org/whl/cu128"]
 where = ["."]
 include = ["cvlab*"]
 
+# ── Ruff ──────────────────────────────────────────────────
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "SIM", # flake8-simplify
+    "T20", # flake8-print (warn on print())
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "N802",   # function name should be lowercase
+    "N803",   # argument name should be lowercase
+    "N806",   # variable in function should be lowercase
+    "N999",   # module name not lowercase
+    "T201",   # allow print() (CLI tool)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"cvlab/tests/*.py" = ["T20", "ARG"]
+"cvlab/cli/console.py" = ["T20"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"
+
+# ── mypy ──────────────────────────────────────────────────
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+no_implicit_optional = true
+warn_return_any = false
+exclude = [
+    "cvlab/tests/",
+    "cvlab/__init__.py",
+]
+
+# ── pytest ────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["cvlab/tests"]
 python_files = ["test_*.py"]
 markers = [
-    "slow: 需要较长时间运行（如下载数据集、实际训练）",
+    "slow: Testes que exigem execução longa (download de datasets, treino real)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning",
+]
+
+# ── Coverage ──────────────────────────────────────────────
+[tool.coverage.run]
+source = ["cvlab"]
+omit = ["cvlab/tests/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "except Exception",
 ]

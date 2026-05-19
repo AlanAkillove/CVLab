@@ -1,50 +1,122 @@
-"""Swiss Design 布局组件 —— 可复用的 UI 元素。
+"""Swiss Design layout components — reusable UI elements with i18n support.
 
-所有组件使用 st.markdown() + CSS class 注入实现，
-不依赖第三方 UI 库。
+All components use st.markdown() + CSS class injection,
+no third-party UI libraries.
 """
 
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import streamlit as st
 
+from cvlab.i18n import _, current_language, set_language, get_available_languages
+
 
 def load_css() -> None:
-    """加载全局 CSS 样式。"""
+    """Load global CSS stylesheet."""
     css_path = Path(__file__).parent.parent / "static" / "style.css"
     if css_path.exists():
         with open(css_path, encoding="utf-8") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
+def inject_language_switcher() -> None:
+    """Inject language switcher and theme toggle into the UI.
+
+    Renders a small fixed-position bar at the top-right corner.
+    """
+    current = current_language()
+    available = get_available_languages()
+
+    # Build language selector HTML
+    options_html = ""
+    for lang in available:
+        code = lang["code"]
+        # Use name_en for consistency
+        display = lang["name_en"]
+        selected = "selected" if code == current else ""
+        options_html += f'<option value="{code}" {selected}>{display}</option>'
+
+    # Detect current theme
+    theme = "dark" if st.get_option("theme.base") == "dark" else "light"
+
+    switcher_html = f"""
+    <div class="lang-switcher">
+        <select id="cvlab-lang-selector"
+                onchange="changeLanguage(this.value)"
+                title="Switch language">
+            {options_html}
+        </select>
+        <button class="theme-toggle" id="cvlab-theme-toggle"
+                onclick="toggleTheme()"
+                title="Toggle dark/light mode">
+            {'🌙' if theme == 'light' else '☀️'}
+        </button>
+    </div>
+    <script>
+    function changeLanguage(lang) {{
+        const params = new URLSearchParams(window.location.search);
+        params.set('lang', lang);
+        window.location.search = params.toString();
+    }}
+    function toggleTheme() {{
+        const html = document.documentElement;
+        const current = html.getAttribute('data-theme');
+        if (current === 'dark') {{
+            html.removeAttribute('data-theme');
+            html.setAttribute('data-theme', 'light');
+        }} else {{
+            html.removeAttribute('data-theme');
+            html.setAttribute('data-theme', 'dark');
+        }}
+    }}
+    </script>
+    """
+
+    st.markdown(switcher_html, unsafe_allow_html=True)
+
+
+def sidebar_footer() -> None:
+    """Render footer info in sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(
+        f'<div style="font-size:0.65rem;color:var(--text-tertiary);'
+        f'text-align:center;padding:0.5rem 0;">'
+        f'CVLab v0.1.0 &mdash; {_("CV实验管理平台")}'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def section_header(label: str, badge: str | None = None) -> None:
-    """渲染带 Swiss Red 下划线的章节标题。
+    """Render section header with Swiss Red underline.
 
     Args:
-        label: 标题文字。
-        badge: 可选的徽章文字（如计数）。
+        label: Header text (will be translated via _()).
+        badge: Optional badge text (e.g. count).
     """
+    translated = _(label)
     badge_html = f'<span class="badge">{badge}</span>' if badge else ""
     st.markdown(
-        f'<div class="section-header"><span class="label">{label}</span>{badge_html}</div>',
+        f'<div class="section-header"><span class="label">{translated}</span>{badge_html}</div>',
         unsafe_allow_html=True,
     )
 
 
 def metric_card(label: str, value: str, sublabel: str | None = None) -> None:
-    """渲染带红色左侧线的指标卡片。
+    """Render metric card with red left rule.
 
     Args:
-        label: 指标名称（自动大写）。
-        value: 指标值。
-        sublabel: 可选的次要描述。
+        label: Metric label (auto-uppercased, translated).
+        value: Metric value.
+        sublabel: Optional secondary description.
     """
-    sub_html = f'<div class="sublabel">{sublabel}</div>' if sublabel else ""
+    sub_html = f'<div class="sublabel">{_(sublabel) if sublabel else ""}</div>' if sublabel else ""
     st.markdown(
         f'<div class="metric-card">'
-        f'<div class="label">{label}</div>'
+        f'<div class="label">{_(label)}</div>'
         f'<div class="value">{value}</div>'
         f'{sub_html}'
         f'</div>',
@@ -53,10 +125,10 @@ def metric_card(label: str, value: str, sublabel: str | None = None) -> None:
 
 
 def metric_row(cards: list[tuple[str, str, str | None]]) -> None:
-    """水平排列多个 metric_card。
+    """Horizontal arrangement of multiple metric_cards.
 
     Args:
-        cards: [(label, value, sublabel), ...]。
+        cards: [(label, value, sublabel), ...].
     """
     cols = st.columns(len(cards))
     for col, (label, value, sublabel) in zip(cols, cards):
@@ -65,15 +137,15 @@ def metric_row(cards: list[tuple[str, str, str | None]]) -> None:
 
 
 def data_card(title: str, content_html: str) -> None:
-    """渲染通用数据卡片。
+    """Render generic data card.
 
     Args:
-        title: 卡片标题。
-        content_html: 卡片内容的 HTML。
+        title: Card title (translated).
+        content_html: Card content HTML.
     """
     st.markdown(
         f'<div class="data-card">'
-        f'<div class="card-title">{title}</div>'
+        f'<div class="card-title">{_(title)}</div>'
         f'{content_html}'
         f'</div>',
         unsafe_allow_html=True,
@@ -81,46 +153,48 @@ def data_card(title: str, content_html: str) -> None:
 
 
 def status_badge(status: str) -> str:
-    """生成状态徽章 HTML。
+    """Generate status badge HTML.
 
     Args:
-        status: 实验状态（completed/running/failed/created/archived）。
+        status: Experiment status (completed/running/failed/created/archived).
 
     Returns:
-        状态徽章的 HTML 字符串。
+        Status badge HTML string.
     """
     normalized = status.lower().replace(" ", "-")
-    return f'<span class="status-badge {normalized}">{status}</span>'
+    display = _(status.capitalize())
+    return f'<span class="status-badge {normalized}">{display}</span>'
 
 
 def tag_chip(tag: str) -> str:
-    """生成标签 Chip HTML。
+    """Generate tag chip HTML.
 
     Args:
-        tag: 标签文字。
+        tag: Tag text.
 
     Returns:
-        标签 Chip 的 HTML 字符串。
+        Tag chip HTML string.
     """
     return f'<span class="tag-chip">{tag}</span>'
 
 
 def specimen_slide(image_path: str, caption: str = "") -> None:
-    """渲染标本幻灯片样式的图片展示。
+    """Render specimen-slide style image display.
 
     Args:
-        image_path: 图片文件路径。
-        caption: 图片说明文字。
+        image_path: Image file path.
+        caption: Image caption (translated).
     """
+    caption_text = _(caption) if caption else ""
     st.markdown(
         f'<div class="specimen-slide">'
         f'<img src="file://{image_path}" style="width:100%;height:auto;display:block;" loading="lazy" />'
-        f'{"<div class=\"slide-label\">" + caption + "</div>" if caption else ""}'
+        f'{"<div class=\"slide-label\">" + caption_text + "</div>" if caption_text else ""}'
         f'</div>',
         unsafe_allow_html=True,
     )
 
 
 def divider() -> None:
-    """渲染细线分隔符。"""
+    """Render thin line divider."""
     st.markdown("<hr />", unsafe_allow_html=True)

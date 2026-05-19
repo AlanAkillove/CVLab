@@ -1,4 +1,4 @@
-"""实验列表页 — Swiss Design。"""
+"""Experiment list page — Swiss Design, i18n-ready."""
 
 from __future__ import annotations
 
@@ -8,15 +8,19 @@ import pandas as pd
 import streamlit as st
 
 from cvlab.db.database import Database
+from cvlab.i18n import _
 from cvlab.ui.components.layout import (
     section_header,
     metric_row,
     status_badge,
     divider,
+    inject_language_switcher,
+    sidebar_footer,
 )
 
 
 def show_experiments():
+    inject_language_switcher()
     st.title("Experiments")
 
     db = Database()
@@ -25,12 +29,16 @@ def show_experiments():
     col1, col2 = st.columns(2)
     with col1:
         status_filter = st.selectbox(
-            "Status",
+            _("状态"),
             ["all", "created", "running", "completed", "failed", "archived"],
             key="exp_status_filter",
         )
     with col2:
-        tag_filter = st.text_input("Tag", placeholder="filter by tag...", key="exp_tag_filter")
+        tag_filter = st.text_input(
+            _("标签"),
+            placeholder=_("过滤") + "...",
+            key="exp_tag_filter",
+        )
 
     kwargs: dict = {"limit": 100}
     if status_filter != "all":
@@ -42,10 +50,12 @@ def show_experiments():
 
     if not exps:
         st.markdown(
-            '<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
-            'font-size:0.9rem;">No experiments yet. Start one with <code>cvlab train</code></div>',
+            f'<div style="text-align:center;padding:4rem 0;color:var(--text-tertiary);'
+            f'font-size:0.9rem;">{_("暂无实验")}. '
+            f'{_("启动训练")}: <code>cvlab train</code></div>',
             unsafe_allow_html=True,
         )
+        sidebar_footer()
         return
 
     # ── Summary row ──────────────────────────────────────
@@ -55,14 +65,14 @@ def show_experiments():
     failed = sum(1 for e in exps if e["status"] == "failed")
 
     metric_row([
-        ("Total", str(total), None),
-        ("Running", str(running), None),
-        ("Completed", str(completed), None),
-        ("Failed", str(failed), None),
+        (_("全部"), str(total), None),
+        (_("运行中"), str(running), None),
+        (_("已完成"), str(completed), None),
+        (_("已失败"), str(failed), None),
     ])
 
     # ── Experiment table ─────────────────────────────────
-    section_header("All Experiments", badge=str(total))
+    section_header(_("实验列表"), badge=str(total))
 
     rows = []
     for e in exps:
@@ -74,18 +84,17 @@ def show_experiments():
         model_name = cfg.get("model", {}).get("name", "—") if isinstance(cfg, dict) else "—"
 
         rows.append({
-            "ID": e["id"],
-            "Name": e["name"],
-            "Model": model_name,
-            "Status": status_badge(e["status"]),
-            "Created": e["created_at"][:19] if e.get("created_at") else "",
+            _("ID"): e["id"],
+            _("名称"): e["name"],
+            _("模型"): model_name,
+            _("状态"): status_badge(e["status"]),
+            _("创建时间"): e["created_at"][:19] if e.get("created_at") else "",
         })
 
     df = pd.DataFrame(rows)
 
     st.markdown(
         df.to_html(
-            columns=["ID", "Name", "Model", "Status", "Created"],
             index=False,
             escape=False,
             classes="data-card",
@@ -98,18 +107,20 @@ def show_experiments():
     # ── Experiment selector ──────────────────────────────
     exp_ids = [e["id"] for e in exps]
     selected_id = st.selectbox(
-        "View experiment",
+        _("选择实验"),
         exp_ids,
         format_func=lambda x: f"{x} — {db.get_experiment(x)['name']}",
         key="exp_selector",
     )
 
     if not selected_id:
+        sidebar_footer()
         return
 
     exp = db.get_experiment(selected_id)
     if not exp:
-        st.error("Experiment not found")
+        st.error(_("实验不存在"))
+        sidebar_footer()
         return
 
     # ── Quick detail panel ───────────────────────────────
@@ -119,7 +130,7 @@ def show_experiments():
     with col1:
         st.markdown(
             f'<div class="metric-card">'
-            f'<div class="label">Status</div>'
+            f'<div class="label">{_("状态")}</div>'
             f'<div class="value">{status_badge(exp["status"])}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -135,7 +146,7 @@ def show_experiments():
     with col3:
         st.markdown(
             f'<div class="metric-card">'
-            f'<div class="label">Created</div>'
+            f'<div class="label">{_("创建时间")}</div>'
             f'<div class="value" style="font-size:0.95rem;">{exp["created_at"][:19]}</div>'
             f'</div>',
             unsafe_allow_html=True,
@@ -145,20 +156,20 @@ def show_experiments():
         st.markdown(
             f'<div class="metric-card" style="border-left-color:var(--accent);'
             f'background:var(--accent-subtle);">'
-            f'<div class="label">Failure Reason</div>'
+            f'<div class="label">{_("失败原因")}</div>'
             f'<div class="value" style="font-size:0.9rem;">{exp["failure_reason"]}</div>'
             f'</div>',
             unsafe_allow_html=True,
         )
 
-    with st.expander("Configuration"):
+    with st.expander(_("超参配置")):
         try:
             cfg = json.loads(exp["config_json"]) if isinstance(exp["config_json"], str) else exp["config_json"]
             st.json(cfg)
         except (json.JSONDecodeError, TypeError):
             st.code(exp.get("config_json", ""), language="json")
 
-    with st.expander("Environment"):
+    with st.expander(_("环境")):
         try:
             env = json.loads(exp.get("env_json", "{}"))
             st.json(env)
@@ -168,9 +179,11 @@ def show_experiments():
     # ── Metrics ─────────────────────────────────────────
     metrics = db.get_metrics(selected_id)
     if metrics:
-        section_header("Training Metrics")
+        section_header(_("训练指标"))
         df_metrics = db.get_metrics_dataframe(selected_id)
         if df_metrics is not None and not df_metrics.empty:
             from cvlab.ui.components.charts import plot_single_metric
             for col in df_metrics.columns:
                 plot_single_metric(df_metrics, col)
+
+    sidebar_footer()

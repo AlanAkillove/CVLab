@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 
+from cvlab.i18n import _
 from cvlab.cli.console import console, error, header, info, result, table, warning
 
 
@@ -19,7 +20,7 @@ def cmd_diagnose(args: argparse.Namespace) -> int:
     elif args.diag_command == "experiment":
         return _diag_experiment(args)
     else:
-        error(f"未知诊断命令: {args.diag_command}")
+        error(_("未知诊断命令: {}").format(args.diag_command))
         return 1
 
 
@@ -31,28 +32,28 @@ def _diag_loss(args: argparse.Namespace) -> int:
     db = Database()
     exp = db.get_experiment(args.experiment_id)
     if not exp:
-        error(f"实验 {args.experiment_id} 不存在")
+        error(_("实验 {} 不存在").format(args.experiment_id))
         return 1
 
-    header(f"Loss 分析: {args.experiment_id}")
+    header(_("Loss 分析: {}").format(args.experiment_id))
 
     metrics = db.get_metrics(args.experiment_id, keys=["train/loss", "val/loss"])
     if not metrics:
-        info("无 loss 指标数据")
+        info(_("无 loss 指标数据"))
         return 0
 
     train_losses = [(m["step"], m["value"]) for m in metrics if m["key"] == "train/loss"]
     val_losses = [(m["step"], m["value"]) for m in metrics if m["key"] == "val/loss"]
 
     if not train_losses and not val_losses:
-        info("无 loss 指标数据")
+        info(_("无 loss 指标数据"))
         return 0
 
     total_anomalies = 0
     for label, loss_seq in [("train", train_losses), ("val", val_losses)]:
         if not loss_seq:
             continue
-        header(f"{label}/loss 序列 ({len(loss_seq)} 个点)")
+        header(_("{}/loss 序列 ({} 个点)").format(label, len(loss_seq)))
         detector = LossDetector(window_size=min(10, len(loss_seq)))
         anomalies = 0
         for step, loss in loss_seq:
@@ -62,16 +63,16 @@ def _diag_loss(args: argparse.Namespace) -> int:
                 for w in report.warnings:
                     warning(w)
                 for s in report.suggestions:
-                    info(f"  建议: {s}")
+                    info(_("  建议: {}").format(s))
 
         if anomalies == 0:
-            info("未检测到异常")
+            info(_("未检测到异常"))
         total_anomalies += anomalies
 
     if total_anomalies > 0:
-        info(f"共检测到 {total_anomalies} 个异常")
+        info(_("共检测到 {} 个异常").format(total_anomalies))
     else:
-        info("loss 曲线表现正常")
+        info(_("loss 曲线表现正常"))
     return 0
 
 
@@ -85,50 +86,49 @@ def _diag_dataloader(args: argparse.Namespace) -> int:
 
     config_path = Path(args.config)
     if not config_path.exists():
-        error(f"配置文件不存在: {config_path}")
+        error(_("配置文件不存在: {}").format(config_path))
         return 1
 
-    header("DataLoader 性能诊断")
+    header(_("DataLoader 性能诊断"))
     config = load_config(str(config_path))
-    info(f"加载数据集...")
+    info(_("加载数据集..."))
     try:
         train_loader, val_loader, class_names = _load_data(config)
     except Exception as e:
-        error(f"数据加载失败: {e}")
+        error(_("数据加载失败: {}").format(e))
         return 1
 
-    header("训练集 DataLoader")
-    info(f"num_workers={train_loader.num_workers}, "
-         f"batch_size={train_loader.batch_size}, "
-         f"pin_memory={train_loader.pin_memory}")
-    info(f"总样本数: {len(train_loader.dataset)}, batches: {len(train_loader)}")
+    header(_("训练集 DataLoader"))
+    info(_("num_workers={}, batch_size={}, pin_memory={}").format(
+        train_loader.num_workers, train_loader.batch_size, train_loader.pin_memory))
+    info(_("总样本数: {}, batches: {}").format(len(train_loader.dataset), len(train_loader)))
 
     profiler = DataLoaderProfiler()
     train_stats = profiler.profile_dataloader(train_loader, num_batches=args.num_batches)
 
-    table("训练集加载性能", ["指标", "值"], [
-        ["采样批次数", str(train_stats["batches"])],
-        ["平均加载时间", f"{train_stats['mean']:.2f} ms"],
-        ["标准差", f"{train_stats['std']:.2f} ms"],
-        ["最慢", f"{train_stats['max']:.2f} ms"],
-        ["最快", f"{train_stats['min']:.2f} ms"],
+    table(_("训练集加载性能"), [_("指标"), _("值")], [
+        [_("采样批次数"), str(train_stats["batches"])],
+        [_("平均加载时间"), _("{} ms").format(f"{train_stats['mean']:.2f}")],
+        [_("标准差"), _("{} ms").format(f"{train_stats['std']:.2f}")],
+        [_("最慢"), _("{} ms").format(f"{train_stats['max']:.2f}")],
+        [_("最快"), _("{} ms").format(f"{train_stats['min']:.2f}")],
     ])
 
     avg = train_stats["mean"]
     if avg > 50:
-        warning(f"数据加载偏慢 ({avg:.0f}ms/batch)")
-        info("建议增加 num_workers 或启用 pin_memory")
+        warning(_("数据加载偏慢 ({}ms/batch)").format(f"{avg:.0f}"))
+        info(_("建议增加 num_workers 或启用 pin_memory"))
     elif avg < 10:
-        info("数据加载速度良好")
+        info(_("数据加载速度良好"))
 
-    header("验证集 DataLoader")
+    header(_("验证集 DataLoader"))
     val_stats = profiler.profile_dataloader(val_loader, num_batches=args.num_batches)
-    table("验证集加载性能", ["指标", "值"], [
-        ["采样批次数", str(val_stats["batches"])],
-        ["平均加载时间", f"{val_stats['mean']:.2f} ms"],
-        ["标准差", f"{val_stats['std']:.2f} ms"],
-        ["最慢", f"{val_stats['max']:.2f} ms"],
-        ["最快", f"{val_stats['min']:.2f} ms"],
+    table(_("验证集加载性能"), [_("指标"), _("值")], [
+        [_("采样批次数"), str(val_stats["batches"])],
+        [_("平均加载时间"), _("{} ms").format(f"{val_stats['mean']:.2f}")],
+        [_("标准差"), _("{} ms").format(f"{val_stats['std']:.2f}")],
+        [_("最慢"), _("{} ms").format(f"{val_stats['max']:.2f}")],
+        [_("最快"), _("{} ms").format(f"{val_stats['min']:.2f}")],
     ])
     return 0
 
@@ -141,33 +141,33 @@ def _diag_gradient(args: argparse.Namespace) -> int:
     db = Database()
     exp = db.get_experiment(args.experiment_id)
     if not exp:
-        error(f"实验 {args.experiment_id} 不存在")
+        error(_("实验 {} 不存在").format(args.experiment_id))
         return 1
 
-    header(f"梯度诊断: {args.experiment_id}")
+    header(_("梯度诊断: {}").format(args.experiment_id))
     diagnosis = GradientDiagnosis().diagnose(args.experiment_id, db)
     icons = {"healthy": "✅", "warning": "⚠️", "critical": "❌"}
-    result("总体状态", f"{icons.get(diagnosis.overall_status, '?')} {diagnosis.overall_status}")
+    result(_("总体状态"), f"{icons.get(diagnosis.overall_status, '?')} {diagnosis.overall_status}")
 
     if diagnosis.total_layers == 0:
-        info(diagnosis.suggestions[0] if diagnosis.suggestions else "无梯度数据")
+        info(diagnosis.suggestions[0] if diagnosis.suggestions else _("无梯度数据"))
         return 0
 
-    result("监控层数", str(diagnosis.total_layers))
-    result("健康", str(diagnosis.healthy_count))
-    result("警告", str(diagnosis.warning_count))
-    result("严重", str(diagnosis.critical_count))
+    result(_("监控层数"), str(diagnosis.total_layers))
+    result(_("健康"), str(diagnosis.healthy_count))
+    result(_("警告"), str(diagnosis.warning_count))
+    result(_("严重"), str(diagnosis.critical_count))
 
     if diagnosis.layer_statuses:
-        header("逐层梯度")
+        header(_("逐层梯度"))
         rows = []
         for s in diagnosis.layer_statuses:
             icon = {"vanishing": "❌", "exploding": "❌", "low": "⚠️", "high": "⚠️", "normal": "✅"}
             rows.append([icon.get(s.status, "?"), s.name[:40], f"{s.mean_norm:.6f}", s.status])
-        table("", ["", "层", "平均范数", "状态"], rows)
+        table("", ["", _("层"), _("平均范数"), _("状态")], rows)
 
     for s in diagnosis.suggestions:
-        info(f"建议: {s}")
+        info(_("建议: {}").format(s))
     return 0
 
 
@@ -178,14 +178,14 @@ def _diag_lr_loss(args: argparse.Namespace) -> int:
     db = Database()
     exp = db.get_experiment(args.experiment_id)
     if not exp:
-        error(f"实验 {args.experiment_id} 不存在")
+        error(_("实验 {} 不存在").format(args.experiment_id))
         return 1
 
-    header(f"LR-Loss 联动分析: {args.experiment_id}")
+    header(_("LR-Loss 联动分析: {}").format(args.experiment_id))
 
     metrics = db.get_metrics(args.experiment_id, keys=["lr", "train/loss", "val/loss"])
     if not metrics:
-        info("无相关指标数据（需要 lr + loss 指标）")
+        info(_("无相关指标数据（需要 lr + loss 指标）"))
         return 0
 
     lr_points = {m["step"]: m["value"] for m in metrics if m["key"] == "lr"}
@@ -193,20 +193,20 @@ def _diag_lr_loss(args: argparse.Namespace) -> int:
     val_loss = {m["step"]: m["value"] for m in metrics if m["key"] == "val/loss"}
 
     if not lr_points:
-        info("无学习率记录（Tracker 会自动记录 lr 指标）")
+        info(_("无学习率记录（Tracker 会自动记录 lr 指标）"))
         return 0
 
     steps = sorted(set(lr_points.keys()) | set(train_loss.keys()) | set(val_loss.keys()))
-    info(f"共 {len(steps)} 个步点，{len(lr_points)} 个 lr 变更点")
+    info(_("共 {} 个步点，{} 个 lr 变更点").format(len(steps), len(lr_points)))
 
     # 检测 lr 调度阶段
     lr_values = sorted(set(lr_points.values()))
-    result("LR 范围", f"{min(lr_values):.2e} ~ {max(lr_values):.2e}")
-    result("LR 阶段数", str(len(lr_values)))
+    result(_("LR 范围"), f"{min(lr_values):.2e} ~ {max(lr_values):.2e}")
+    result(_("LR 阶段数"), str(len(lr_values)))
 
     # 检测 lr 下降后 loss 响应
     if len(lr_values) >= 2 and len(train_loss) >= 3:
-        header("LR 下降响应分析")
+        header(_("LR 下降响应分析"))
         for step in sorted(lr_points.keys()):
             current_lr = lr_points[step]
             # 找这个 step 附近的 loss
@@ -217,11 +217,14 @@ def _diag_lr_loss(args: argparse.Namespace) -> int:
                 if len(future) >= 2:
                     loss_after = future[-1]
                     if loss_after < loss_before * 0.95:
-                        info(f"  Step {step}: lr→{current_lr:.2e}, loss {loss_before:.4f}→{loss_after:.4f} ✅ 有效")
+                        info(_("  Step {}: lr→{}, loss {}→{} ✅ 有效").format(
+                            step, f"{current_lr:.2e}", f"{loss_before:.4f}", f"{loss_after:.4f}"))
                     elif loss_after > loss_before * 1.05:
-                        warning(f"  Step {step}: lr→{current_lr:.2e}, loss {loss_before:.4f}→{loss_after:.4f} ⚠️ loss 反弹")
+                        warning(_("  Step {}: lr→{}, loss {}→{} ⚠️ loss 反弹").format(
+                            step, f"{current_lr:.2e}", f"{loss_before:.4f}", f"{loss_after:.4f}"))
                     else:
-                        info(f"  Step {step}: lr→{current_lr:.2e}, loss {loss_before:.4f}→{loss_after:.4f} → 平稳")
+                        info(_("  Step {}: lr→{}, loss {}→{} → 平稳").format(
+                            step, f"{current_lr:.2e}", f"{loss_before:.4f}", f"{loss_after:.4f}"))
 
     # 检测是否过拟合 (val loss 上升但 train loss 下降)
     if len(val_loss) >= 5 and len(train_loss) >= 5:
@@ -231,8 +234,8 @@ def _diag_lr_loss(args: argparse.Namespace) -> int:
         recent_train = [train_loss[s] for s in train_steps_sorted[-3:]]
         if all(recent_val[i] > recent_val[0] for i in range(1, len(recent_val))) and \
            all(recent_train[i] < recent_train[0] for i in range(1, len(recent_train))):
-            warning("过拟合迹象: val loss 持续上升但 train loss 持续下降")
-            info("建议: 增加正则化、增强数据增强、早停")
+            warning(_("过拟合迹象: val loss 持续上升但 train loss 持续下降"))
+            info(_("建议: 增加正则化、增强数据增强、早停"))
 
     return 0
 
@@ -245,12 +248,12 @@ def _diag_experiment(args: argparse.Namespace) -> int:
     db = Database()
     exp = db.get_experiment(args.experiment_id)
     if not exp:
-        error(f"实验 {args.experiment_id} 不存在")
+        error(_("实验 {} 不存在").format(args.experiment_id))
         return 1
 
-    header(f"全面诊断: {args.experiment_id}")
-    result("名称", exp["name"])
-    result("状态", exp["status"])
+    header(_("全面诊断: {}").format(args.experiment_id))
+    result(_("名称"), exp["name"])
+    result(_("状态"), exp["status"])
 
     # Loss 分析
     metrics = db.get_metrics(args.experiment_id, keys=["train/loss", "val/loss"])
@@ -265,62 +268,66 @@ def _diag_experiment(args: argparse.Namespace) -> int:
                     anomalies += 1
                     for w in report.warnings:
                         warning(w)
-            info(f"Loss 分析: {len(train_losses)} 个点, {anomalies} 个异常" if anomalies else
-                 f"Loss 分析: {len(train_losses)} 个点, 无异常")
+            info(_("Loss 分析: {} 个点, {} 个异常").format(len(train_losses), anomalies) if anomalies else
+                 _("Loss 分析: {} 个点, 无异常").format(len(train_losses)))
 
     # 梯度分析
     from cvlab.diagnose.gradient import GradientDiagnosis
     grad = GradientDiagnosis().diagnose(args.experiment_id, db)
     if grad.total_layers > 0:
         icons = {"healthy": "✅", "warning": "⚠️", "critical": "❌"}
-        info(f"梯度: {icons.get(grad.overall_status, '?')} {grad.overall_status} "
-             f"({grad.healthy_count}健康/{grad.warning_count}警告/{grad.critical_count}严重)")
+        info(_("梯度: {} {} ({}健康/{}警告/{}严重)").format(
+            icons.get(grad.overall_status, '?'), grad.overall_status,
+            grad.healthy_count, grad.warning_count, grad.critical_count))
 
     # LR-Loss 联动
     lr_points = {m["step"]: m["value"] for m in metrics if m["key"] == "lr"} if metrics else {}
     if lr_points:
-        info(f"LR 阶段: {len(set(lr_points.values()))} 个, 范围 {min(lr_points.values()):.2e}~{max(lr_points.values()):.2e}")
+        info(_("LR 阶段: {} 个, 范围 {}~{}").format(
+            len(set(lr_points.values())),
+            f"{min(lr_points.values()):.2e}",
+            f"{max(lr_points.values()):.2e}"))
 
     # 最佳指标
     best_acc = db.get_metrics(args.experiment_id, keys=["val/acc"])
     if best_acc:
         best_val = max(best_acc, key=lambda m: m["value"])
-        result("最佳 val_acc", f"{best_val['value']*100:.2f}% (step {best_val['step']})")
+        result(_("最佳 val_acc"), _("{}% (step {})").format(f"{best_val['value']*100:.2f}", best_val['step']))
 
     ckpts = db.get_checkpoints(args.experiment_id)
     if ckpts:
-        result("Checkpoints", f"{len(ckpts)} 个")
+        result(_("Checkpoints"), _("{} 个").format(len(ckpts)))
         best = next((c for c in ckpts if c["is_best"]), None)
         if best:
-            result("最优 Checkpoint", f"epoch {best['epoch']} ({best.get('metric_value', 'N/A')})")
+            result(_("最优 Checkpoint"), _("epoch {} ({})").format(best['epoch'], best.get('metric_value', 'N/A')))
 
     if exp.get("env_json") and exp["env_json"] != "{}":
         import json
         env = json.loads(exp["env_json"])
         if env.get("torch_version"):
-            info(f"PyTorch: {env['torch_version']}")
+            info(_("PyTorch: {}").format(env['torch_version']))
         if env.get("cuda_version"):
-            info(f"CUDA: {env['cuda_version']}")
+            info(_("CUDA: {}").format(env['cuda_version']))
         if env.get("num_gpus"):
-            info(f"GPU 数: {env['num_gpus']}")
+            info(_("GPU 数: {}").format(env['num_gpus']))
 
     return 0
 
 
 def add_subparser(sub) -> None:
-    p = sub.add_parser("diagnose", help="训练诊断工具")
+    p = sub.add_parser("diagnose", help=_("训练诊断工具"))
     sp = p.add_subparsers(dest="diag_command")
 
-    sp.add_parser("loss", help="分析实验 loss 指标").add_argument("experiment_id", help="实验 ID")
+    sp.add_parser("loss", help=_("分析实验 loss 指标")).add_argument("experiment_id", help=_("实验 ID"))
 
-    dl_p = sp.add_parser("dataloader", help="DataLoader 性能诊断")
-    dl_p.add_argument("config", help="配置文件路径")
-    dl_p.add_argument("--num-batches", type=int, default=50, help="采样批次数")
+    dl_p = sp.add_parser("dataloader", help=_("DataLoader 性能诊断"))
+    dl_p.add_argument("config", help=_("配置文件路径"))
+    dl_p.add_argument("--num-batches", type=int, default=50, help=_("采样批次数"))
 
-    sp.add_parser("gradient", help="分析实验梯度健康").add_argument("experiment_id", help="实验 ID")
+    sp.add_parser("gradient", help=_("分析实验梯度健康")).add_argument("experiment_id", help=_("实验 ID"))
 
-    sp.add_parser("lr-loss", help="学习率与 Loss 联动分析").add_argument("experiment_id", help="实验 ID")
+    sp.add_parser("lr-loss", help=_("学习率与 Loss 联动分析")).add_argument("experiment_id", help=_("实验 ID"))
 
-    sp.add_parser("experiment", help="全面诊断实验").add_argument("experiment_id", help="实验 ID")
+    sp.add_parser("experiment", help=_("全面诊断实验")).add_argument("experiment_id", help=_("实验 ID"))
 
     p.set_defaults(func=cmd_diagnose)
