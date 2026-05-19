@@ -1,11 +1,12 @@
-"""Plotly 图表组件 —— Swiss Design 风格的训练指标可视化。"""
+"""Plotly chart components — Swiss Design style training metric visualization."""
 
 from __future__ import annotations
 
 from typing import Any
 
-import plotly.graph_objects as go
+import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import plotly.io as pio
 import streamlit as st
 
@@ -53,12 +54,12 @@ pio.templates["swiss"] = go.layout.Template(
             title=dict(font=dict(size=11, color="#6B6B73")),
         ),
         colorway=[
-            "#E4002B",  # Swiss Red
-            "#1A1A1E",  # Near black
-            "#6B6B73",  # Grey
-            "#002FA7",  # Yves Klein Blue
-            "#E65100",  # Orange
-            "#9C9CA6",  # Light grey
+            "#E4002B",
+            "#1A1A1E",
+            "#6B6B73",
+            "#002FA7",
+            "#E65100",
+            "#9C9CA6",
         ],
         legend=dict(
             font=dict(size=11, color="#1A1A1E"),
@@ -72,7 +73,6 @@ pio.templates["swiss"] = go.layout.Template(
         ),
         margin=dict(l=50, r=20, t=40, b=50),
         shapes=[
-            # Hairline top border
             dict(
                 type="line",
                 x0=0, y0=1, x1=1, y1=1,
@@ -87,17 +87,10 @@ pio.templates.default = "swiss"
 
 
 def plot_metric_overlay(
-    metrics_by_exp: dict[str, "pd.DataFrame"],
+    metrics_by_exp: dict[str, pd.DataFrame],
     metric_key: str,
 ) -> None:
-    """叠加显示多个实验的同一指标曲线。
-
-    Args:
-        metrics_by_exp: {experiment_id: DataFrame}。
-        metric_key: 指标名。
-    """
-    import pandas as pd  # noqa: F811
-
+    """Overlay the same metric curve from multiple experiments."""
     fig = go.Figure()
     has_data = False
 
@@ -120,19 +113,17 @@ def plot_metric_overlay(
             yaxis_title="Value",
             template="swiss",
         )
-        st.plotly_chart(fig, width='stretch', use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info(f"{_('无')} {metric_key} {_('数据')}")
 
 
 def plot_single_metric(
-    df: "pd.DataFrame",
+    df: pd.DataFrame,
     column: str,
     title: str | None = None,
 ) -> None:
-    """绘制单条指标曲线。"""
-    import pandas as pd  # noqa: F811
-
+    """Plot a single metric curve."""
     if column not in df.columns or df[column].empty:
         st.info(f"{_('无')} {column} {_('数据')}")
         return
@@ -144,7 +135,7 @@ def plot_single_metric(
     )
     fig.update_traces(line=dict(width=1.5, color="#E4002B"))
     fig.update_layout(template="swiss")
-    st.plotly_chart(fig, width='stretch', use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def plot_confusion_matrix(
@@ -152,7 +143,7 @@ def plot_confusion_matrix(
     class_names: list[str],
     title: str = "Confusion Matrix",
 ) -> None:
-    """绘制混淆矩阵热力图。"""
+    """Plot confusion matrix heatmap."""
     fig = px.imshow(
         cm,
         x=class_names,
@@ -171,16 +162,14 @@ def plot_confusion_matrix(
     )
     fig.update_xaxes(tickangle=45)
     fig.update_yaxes(tickangle=0)
-    st.plotly_chart(fig, width='stretch', use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 def plot_trial_comparison(
     trial_values: list[dict[str, Any]],
     metric_key: str,
 ) -> None:
-    """绘制 Trial 指标柱状对比图。"""
-    import pandas as pd  # noqa: F811
-
+    """Plot trial metric bar chart."""
     df = pd.DataFrame(trial_values)
     fig = px.bar(
         df, x="Trial", y=metric_key,
@@ -199,4 +188,4 @@ def plot_trial_comparison(
         showlegend=False,
         coloraxis_showscale=False,
     )
-    st.plotly_chart(fig, width='stretch', use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True)

@@ -5,8 +5,6 @@
 
 from __future__ import annotations
 
-import warnings
-
 import torch
 
 from cvlab.core.types import GPUInfo
@@ -93,6 +91,7 @@ def check_cuda_mismatch() -> tuple[bool, str]:
 def get_recommended_num_workers() -> int:
     """推荐 num_workers 值（基于 CPU 物理核心数）。"""
     import os
+
     import psutil
     cores = psutil.cpu_count(logical=False) or os.cpu_count() or 4
     return max(2, min(cores, 16))

@@ -20,15 +20,15 @@ def main(argv: list[str] | None = None) -> int:
 
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
-    from cvlab.cli.train import add_subparser as add_train
-    from cvlab.cli.sweep import add_subparser as add_sweep
-    from cvlab.cli.profile import add_subparser as add_profile
-    from cvlab.cli.weights import add_subparser as add_weights
-    from cvlab.cli.diagnose import add_subparser as add_diagnose
-    from cvlab.cli.data import add_subparser as add_data
     from cvlab.cli.compare import add_subparser as add_compare
+    from cvlab.cli.data import add_subparser as add_data
+    from cvlab.cli.diagnose import add_subparser as add_diagnose
     from cvlab.cli.help_ import add_subparser as add_help
+    from cvlab.cli.profile import add_subparser as add_profile
+    from cvlab.cli.sweep import add_subparser as add_sweep
+    from cvlab.cli.train import add_subparser as add_train
     from cvlab.cli.ui import add_subparser as add_ui
+    from cvlab.cli.weights import add_subparser as add_weights
 
     add_train(sub)
     add_compare(sub)
@@ -76,6 +76,7 @@ def main(argv: list[str] | None = None) -> int:
 
 def _cmd_init(args: argparse.Namespace) -> int:
     from pathlib import Path
+
     from cvlab.cli.console import result
 
     cvlab_dir = Path(".cvlab")
@@ -85,9 +86,9 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
-    from cvlab.i18n import _
     from cvlab.cli.console import header, info, result, table
     from cvlab.db.database import Database
+    from cvlab.i18n import _
 
     db = Database()
     exps = db.list_experiments(status=args.status, tag=args.tag, limit=args.limit)
@@ -106,9 +107,10 @@ def _cmd_list(args: argparse.Namespace) -> int:
 
 def _cmd_show(args: argparse.Namespace) -> int:
     import json
-    from cvlab.i18n import _
+
     from cvlab.cli.console import console, header, info, panel, result
     from cvlab.db.database import Database
+    from cvlab.i18n import _
 
     db = Database()
     exp = db.get_experiment(args.experiment_id)

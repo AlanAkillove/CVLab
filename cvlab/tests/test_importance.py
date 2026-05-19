@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import json
-
 import pytest
 
 from cvlab.sweep.importance import ImportanceResult, _flatten_config, analyze_importance
@@ -122,7 +120,7 @@ class TestAnalyzeImportanceEdgeCases:
         """通用辅助：创建 sweep 并填充指定 trial 和指标。"""
         base_exp_id = db.create_experiment(name="sweep_base", config={})
         db.create_sweep(sweep_id, base_exp_id, {}, "grid")
-        for i, (cfg, met) in enumerate(zip(trial_configs, metric_values)):
+        for i, (cfg, met) in enumerate(zip(trial_configs, metric_values, strict=False)):
             exp_id = db.create_experiment(name=f"trial_{i}", config=cfg)
             db.add_sweep_trial(sweep_id, exp_id, i, cfg)
             db.update_experiment_status(exp_id, "completed")

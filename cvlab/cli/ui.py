@@ -17,7 +17,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from cvlab.cli.console import console, error, info
+from cvlab.cli.console import error, info
 from cvlab.i18n import _
 
 

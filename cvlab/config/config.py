@@ -9,7 +9,6 @@ from typing import Any
 
 import yaml
 
-
 # 默认实验配置
 DEFAULT_CONFIG: dict[str, Any] = {
     "model": {
@@ -54,7 +53,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"配置文件不存在: {path}")
 
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         user_config = yaml.safe_load(f)
 
     return merge_config(copy.deepcopy(DEFAULT_CONFIG), user_config or {})

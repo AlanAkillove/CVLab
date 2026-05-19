@@ -5,9 +5,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from cvlab.i18n import _
 from cvlab.cli.console import header, info, result, table
 from cvlab.config.config import load_config
+from cvlab.i18n import _
 from cvlab.sweep.sweeper import Sweeper
 
 

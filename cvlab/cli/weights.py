@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from cvlab.i18n import _
 from cvlab.cli.console import header, info, result, table
+from cvlab.i18n import _
 from cvlab.weights.manager import WeightManager
 
 
@@ -71,7 +71,6 @@ def _cmd_info(args: argparse.Namespace, mgr: WeightManager) -> int:
     from cvlab.cli.console import error
 
     try:
-        import torch
         import torchvision.models as models
 
         builder = getattr(models, args.name, None)

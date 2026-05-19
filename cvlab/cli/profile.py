@@ -6,8 +6,8 @@ import argparse
 
 import torch
 
-from cvlab.i18n import _
 from cvlab.cli.console import header, info, result
+from cvlab.i18n import _
 
 
 def cmd_profile(args: argparse.Namespace) -> int:

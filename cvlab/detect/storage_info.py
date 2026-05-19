@@ -46,7 +46,7 @@ def _detect_disk_type_windows(path: Path) -> str:
     if not drive:
         return "unknown"
     subprocess.run(
-        ["wmic", "diskdrive", "where", f"MediaType='Fixed hard disk media'",
+        ["wmic", "diskdrive", "where", "MediaType='Fixed hard disk media'",
          "get", "Index,MediaType", "/format:csv"],
         capture_output=True, text=True, timeout=10,
         encoding="utf-8", errors="replace",
@@ -71,7 +71,7 @@ def _detect_disk_type_windows(path: Path) -> str:
 def _detect_disk_type_linux(path: Path) -> str:
     """Linux 下通过 /sys/block 判断磁盘类型。"""
     try:
-        with open("/proc/mounts", "r", encoding="utf-8") as f:
+        with open("/proc/mounts", encoding="utf-8") as f:
             for line in f:
                 parts = line.split()
                 if len(parts) >= 2 and parts[1] == str(path):
@@ -79,7 +79,7 @@ def _detect_disk_type_linux(path: Path) -> str:
                     disk_name = dev.split("/")[-1].rstrip("0123456789")
                     rotational_path = f"/sys/block/{disk_name}/queue/rotational"
                     try:
-                        with open(rotational_path, "r", encoding="utf-8") as rf:
+                        with open(rotational_path, encoding="utf-8") as rf:
                             is_hdd = rf.read().strip() == "1"
                             return "hdd" if is_hdd else "ssd"
                     except Exception:

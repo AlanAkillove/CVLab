@@ -1,7 +1,6 @@
 """OS 信息检测。"""
 
 import platform
-import sys
 
 
 def detect_os() -> tuple[str, str]:
@@ -19,7 +18,7 @@ def detect_os() -> tuple[str, str]:
 def is_wsl() -> bool:
     """检测是否运行在 WSL2 环境。"""
     try:
-        with open("/proc/version", "r", encoding="utf-8") as f:
+        with open("/proc/version", encoding="utf-8") as f:
             return "microsoft" in f.read().lower()
     except Exception:
         return False

@@ -4,10 +4,10 @@ import numpy as np
 import torch
 
 from cvlab.diagnose.prediction import (
+    _get_color,
     classification_samples,
     detection_overlay,
     segmentation_overlay,
-    _get_color,
 )
 
 

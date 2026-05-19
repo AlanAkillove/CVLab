@@ -8,13 +8,9 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 from io import StringIO
 
-import pytest
-
 from cvlab.cli.main import main
-
 
 # ── 辅助函数 ──────────────────────────────────────────────
 

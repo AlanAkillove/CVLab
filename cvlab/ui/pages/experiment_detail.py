@@ -10,13 +10,13 @@ import streamlit as st
 from cvlab.db.database import Database
 from cvlab.i18n import _
 from cvlab.ui.components.layout import (
-    section_header,
-    metric_card,
-    status_badge,
-    tag_chip,
     divider,
     inject_language_switcher,
+    metric_card,
+    section_header,
     sidebar_footer,
+    status_badge,
+    tag_chip,
 )
 
 

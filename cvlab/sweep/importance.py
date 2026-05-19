@@ -116,7 +116,7 @@ def analyze_importance(sweep_id: str, db: Database | None = None,
         importances = importances / importances.sum()
 
     # 构建结果
-    param_imp = dict(zip(valid_param_names, importances.tolist()))
+    param_imp = dict(zip(valid_param_names, importances.tolist(), strict=False))
     sorted_params = sorted(param_imp.items(), key=lambda x: -x[1])
 
     suggestions = []

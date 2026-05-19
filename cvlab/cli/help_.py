@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
-from cvlab.i18n import _
 from cvlab.cli.console import console, header, table
+from cvlab.i18n import _
 
 
 def cmd_help(args: argparse.Namespace) -> int:

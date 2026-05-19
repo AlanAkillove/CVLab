@@ -16,7 +16,7 @@ import json
 from rich import box
 from rich.table import Table
 
-from cvlab.cli.console import console, header, info, result
+from cvlab.cli.console import console, header, result
 from cvlab.db.database import Database
 from cvlab.i18n import _
 
@@ -79,7 +79,7 @@ def cmd_compare(args: argparse.Namespace) -> int:
             cfg_table.add_column(exp["id"][:16])
         for key in sorted(config_keys):
             values = []
-            for i, exp in enumerate(experiments):
+            for i, _ in enumerate(experiments):
                 val = configs[i].get(key, "—")
                 # 高亮不同的值
                 if i > 0 and val != configs[0].get(key, "—"):

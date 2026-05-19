@@ -7,10 +7,10 @@ import streamlit as st
 from cvlab.detect.probe import EnvironmentProbe
 from cvlab.i18n import _
 from cvlab.ui.components.layout import (
-    section_header,
-    metric_card,
     divider,
     inject_language_switcher,
+    metric_card,
+    section_header,
     sidebar_footer,
 )
 
@@ -88,12 +88,19 @@ def show_diagnostics():
 
         for opt in panel.options:
             icon = "✓" if opt.supported else "✗"
+            # Build sublabel HTML outside f-string for Python 3.10 compat
+            sublabel_parts = []
+            if not opt.supported and opt.condition:
+                sublabel_parts.append(f'<div class="sublabel">Requires: {opt.condition}</div>')
+            if opt.risk:
+                sublabel_parts.append(f'<div class="sublabel">\u26a0 {opt.risk}</div>')
+            sublabel_html = "".join(sublabel_parts)
+            border_color = "var(--success)" if opt.supported else "var(--border)"
             st.markdown(
-                f'<div class="metric-card" style="border-left-color:{"var(--success)" if opt.supported else "var(--border)"};">'
+                f'<div class="metric-card" style="border-left-color:{border_color};">'
                 f'<div class="label">{icon} {opt.name}</div>'
                 f'<div class="value" style="font-size:0.85rem;">{opt.benefit}</div>'
-                f'{"<div class=\"sublabel\">Requires: " + opt.condition + "</div>" if not opt.supported and opt.condition else ""}'
-                f'{"<div class=\"sublabel\">⚠ " + opt.risk + "</div>" if opt.risk else ""}'
+                f'{sublabel_html}'
                 f'</div>',
                 unsafe_allow_html=True,
             )

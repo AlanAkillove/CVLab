@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import math
-from typing import Any
 
 import torch
 import torch.nn as nn
@@ -61,12 +60,8 @@ class BatchSizeProbe:
             else:
                 high = mid - 1
 
-        # 安全余量
-        if self.num_gpus > 1:
-            # 多卡：有效 BS = 单卡 BS × GPU 数
-            recommended = best
-        else:
-            recommended = max(1, int(best * 0.8))
+        # 安全余量：多卡不过安全系数（有效 BS = 单卡 BS × GPU 数）
+        recommended = best if self.num_gpus > 1 else max(1, int(best * 0.8))
 
         result = ProbeResult(
             recommended_batch_size=recommended,

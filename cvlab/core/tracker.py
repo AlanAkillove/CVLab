@@ -5,24 +5,20 @@ from __future__ import annotations
 import json
 import logging
 import shutil
-import subprocess
 import sys
 import time
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
 import numpy as np
 import torch
 
-from cvlab.config.config import DEFAULT_CONFIG, config_to_json, save_config, merge_config
+from cvlab.config.config import DEFAULT_CONFIG, merge_config, save_config
 from cvlab.core.seed import seed_everything
 from cvlab.core.types import (
-    AccelerationConfig,
     EnvironmentReport,
     GPUInfo,
-    ProbeResult,
 )
 from cvlab.core.watch import GradientMonitor
 
@@ -274,7 +270,7 @@ class Tracker:
         """
         import cv2
         vis = image.copy()
-        for box, score, label in zip(boxes, scores, labels):
+        for box, score, label in zip(boxes, scores, labels, strict=False):
             if score < score_threshold:
                 continue
             x1, y1, x2, y2 = [int(v) for v in box]

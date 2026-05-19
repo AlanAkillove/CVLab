@@ -4,11 +4,10 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass, field
-from typing import Any
 
 import torch
 
-from cvlab.core.types import EnvironmentReport, GPUInfo
+from cvlab.core.types import EnvironmentReport
 from cvlab.detect.cpu_info import detect_cpu
 from cvlab.detect.gpu_info import (
     check_cuda_mismatch,

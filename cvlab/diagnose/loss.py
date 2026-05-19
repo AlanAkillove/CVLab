@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Any
 
 
 @dataclass
@@ -83,7 +82,7 @@ class LossDetector:
             return LossAnomalyReport(has_anomaly=False)
 
         recent = self._losses[-self.window_size:]
-        recent_steps = self._steps[-self.window_size:]
+        self._steps[-self.window_size:]
 
         # 爆炸检测：连续 N 步 loss 上升且幅度大
         if len(recent) >= 5:

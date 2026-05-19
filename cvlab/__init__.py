@@ -8,8 +8,13 @@ from __future__ import annotations
 __version__ = "0.2.2"
 
 # ── 核心 API ──────────────────────────────────────────────
-from cvlab.core.tracker import Tracker
+# ── Checkpoint ─────────────────────────────────────────────
+from cvlab.checkpoint.manager import CheckpointManager
+
+# ── 配置 ───────────────────────────────────────────────────
+from cvlab.config.config import DEFAULT_CONFIG, load_config, validate_config
 from cvlab.core.seed import seed_everything
+from cvlab.core.tracker import Tracker
 from cvlab.core.types import (
     AccelerationConfig,
     EnvironmentReport,
@@ -19,38 +24,32 @@ from cvlab.core.types import (
 )
 from cvlab.core.watch import GradientMonitor, GradientReport
 
-# ── 配置 ───────────────────────────────────────────────────
-from cvlab.config.config import DEFAULT_CONFIG, load_config, validate_config
+# ── 数据集 ─────────────────────────────────────────────────
+from cvlab.data.analyze import DatasetAnalyzer, DatasetReport
+from cvlab.data.augment import AugmentPreview
+from cvlab.data.provenance import DatasetProvenance
+
+# ── 环境检测 ───────────────────────────────────────────────
+from cvlab.detect.probe import EnvironmentProbe
+from cvlab.diagnose.io_bottleneck import IOBottleneckDetector, IOBottleneckReport
+
+# ── 诊断 ───────────────────────────────────────────────────
+from cvlab.diagnose.loss import LossAnomalyReport, LossDetector
+
+# ── 国际化 ─────────────────────────────────────────────────
+from cvlab.i18n import _, current_language, get_available_languages, set_language
 
 # ── 探针 ───────────────────────────────────────────────────
 from cvlab.probe.batch_size import BatchSizeProbe
 
-# ── 环境检测 ───────────────────────────────────────────────
-from cvlab.detect.probe import EnvironmentProbe
-
-# ── 诊断 ───────────────────────────────────────────────────
-from cvlab.diagnose.loss import LossDetector, LossAnomalyReport
-from cvlab.diagnose.io_bottleneck import IOBottleneckDetector, IOBottleneckReport
-
-# ── 数据集 ─────────────────────────────────────────────────
-from cvlab.data.analyze import DatasetAnalyzer, DatasetReport
-from cvlab.data.provenance import DatasetProvenance
-from cvlab.data.augment import AugmentPreview
-
-# ── Checkpoint ─────────────────────────────────────────────
-from cvlab.checkpoint.manager import CheckpointManager
-
-# ── 权重管理 ───────────────────────────────────────────────
-from cvlab.weights.manager import WeightManager
-
 # ── 模型 Profile ───────────────────────────────────────────
-from cvlab.profile.model_card import ModelProfiler, ModelCard
+from cvlab.profile.model_card import ModelCard, ModelProfiler
 
 # ── 报告 ───────────────────────────────────────────────────
 from cvlab.report.html_report import HtmlReportGenerator
 
-# ── 国际化 ─────────────────────────────────────────────────
-from cvlab.i18n import set_language, current_language, _, get_available_languages
+# ── 权重管理 ───────────────────────────────────────────────
+from cvlab.weights.manager import WeightManager
 
 __all__ = [
     # 版本

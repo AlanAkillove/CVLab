@@ -3,11 +3,9 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
-from cvlab.data.analyze import DatasetAnalyzer, DatasetReport
-from cvlab.data.provenance import ProvenanceTracker, DatasetProvenance
+from cvlab.data.analyze import DatasetAnalyzer
 from cvlab.data.augment import AugmentPreview
+from cvlab.data.provenance import DatasetProvenance, ProvenanceTracker
 
 
 def _create_fake_image(path: Path, width: int = 32, height: int = 32):

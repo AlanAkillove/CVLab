@@ -10,11 +10,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 
-from cvlab.i18n import _
-from cvlab.cli.console import console, header, info, progress, result, success, warning
+from cvlab.cli.console import console, header, info, progress, result, warning
 from cvlab.config.config import load_config, validate_config
 from cvlab.core.seed import seed_everything
 from cvlab.core.tracker import Tracker
+from cvlab.i18n import _
 
 
 def train_classification(config_path: str,
@@ -240,12 +240,12 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
                                      num_workers=num_workers, pin_memory=pin_memory)
             return train_loader, val_loader, class_names
         except Exception as e:
-            raise RuntimeError(_("内置数据集 '{}' 加载失败: {}").format(dataset_name, e))
+            raise RuntimeError(_("内置数据集 '{}' 加载失败: {}").format(dataset_name, e)) from e
 
     # ImageFolder 格式
     if dataset_path:
-        from torchvision.datasets import ImageFolder
         from torch.utils.data import random_split
+        from torchvision.datasets import ImageFolder
 
         root = Path(dataset_path)
         if not root.exists():
@@ -284,7 +284,7 @@ def _create_model(config: dict, num_classes: int, device: torch.device) -> nn.Mo
             raise ValueError(_("不支持的模型: {}").format(model_name))
         model = builder(weights=weights)
     except Exception as e:
-        raise ValueError(_("模型 '{}' 创建失败: {}").format(model_name, e))
+        raise ValueError(_("模型 '{}' 创建失败: {}").format(model_name, e)) from e
 
     # 替换分类头
     if hasattr(model, "fc"):

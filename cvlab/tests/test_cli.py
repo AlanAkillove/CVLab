@@ -18,8 +18,8 @@ class TestCLI:
             os.chdir(orig_dir)
 
     def test_list_empty(self):
-        import tempfile
         import os
+        import tempfile
         orig_dir = os.getcwd()
         try:
             tmp = tempfile.mkdtemp()

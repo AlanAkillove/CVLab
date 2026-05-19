@@ -17,7 +17,7 @@ def _get_cpu_model() -> str:
     """获取 CPU 型号名称。"""
     try:
         if os.name == "posix":
-            with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+            with open("/proc/cpuinfo", encoding="utf-8") as f:
                 for line in f:
                     if line.startswith("model name"):
                         return line.split(":")[1].strip()

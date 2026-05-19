@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from cvlab.cli.console import console, error, header, info, result, success, table
 from cvlab.i18n import _
-from cvlab.cli.console import console, error, header, info, result, table, success
 
 
 def cmd_data(args: argparse.Namespace) -> int:
@@ -75,8 +75,8 @@ def _cmd_augment(args: argparse.Namespace) -> int:
         error(_("图片不存在: {}").format(image_path))
         return 1
 
-    from PIL import Image
     import torchvision.transforms as T
+    from PIL import Image
 
     try:
         pil_img = Image.open(image_path).convert("RGB")

@@ -1,8 +1,8 @@
 """环境检测模块测试。"""
 
-from cvlab.detect.os_info import detect_os, is_wsl
 from cvlab.detect.cpu_info import detect_cpu
 from cvlab.detect.gpu_info import detect_gpus, get_recommended_num_workers
+from cvlab.detect.os_info import detect_os, is_wsl
 from cvlab.detect.probe import EnvironmentProbe
 
 

@@ -1,7 +1,5 @@
 """BatchSizeProbe 测试（CPU 模式）。"""
 
-import pytest
-import torch
 import torch.nn as nn
 
 from cvlab.probe.batch_size import BatchSizeProbe

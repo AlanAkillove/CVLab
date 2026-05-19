@@ -6,7 +6,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from cvlab.weights.manager import WeightManager, LoadDiagnostic
+from cvlab.weights.manager import LoadDiagnostic, WeightManager
 
 
 class SimpleModel(nn.Module):

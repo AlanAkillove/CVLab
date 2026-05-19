@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import streamlit as st
 
-from cvlab.i18n import set_language, current_language, language_selector_html, _
+from cvlab.i18n import _, set_language
 from cvlab.ui.components.layout import load_css
 
 st.set_page_config(
@@ -33,12 +33,12 @@ def main():
 
     load_css()
 
-    from cvlab.ui.pages.experiments import show_experiments
-    from cvlab.ui.pages.experiment_detail import show_experiment_detail
     from cvlab.ui.pages.compare import show_compare
-    from cvlab.ui.pages.sweep import show_sweep
-    from cvlab.ui.pages.diagnostics import show_diagnostics
     from cvlab.ui.pages.datasets import show_datasets
+    from cvlab.ui.pages.diagnostics import show_diagnostics
+    from cvlab.ui.pages.experiment_detail import show_experiment_detail
+    from cvlab.ui.pages.experiments import show_experiments
+    from cvlab.ui.pages.sweep import show_sweep
 
     pages = {
         _("Experiments"): [

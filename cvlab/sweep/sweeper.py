@@ -6,7 +6,7 @@ import copy
 from typing import Any
 
 from cvlab.db.database import Database
-from cvlab.sweep.grid import generate_grid, count_grid
+from cvlab.sweep.grid import generate_grid
 from cvlab.sweep.random import sample_random
 
 
@@ -76,8 +76,8 @@ class Sweeper:
             config=sweep_config,
         )
 
-        from datetime import datetime
         import random as _random
+        from datetime import datetime
         ts = datetime.now().strftime('%y%m%d_%H%M%S')
         sweep_id = f"sweep_{ts}_{_random.randint(10000, 99999)}"
 
@@ -115,10 +115,7 @@ class Sweeper:
             if not values:
                 continue
             val = values[-1]
-            if ("acc" in metric_key or "f1" in metric_key) and val > best_val:
-                best_val = val
-                best = {**t, "metric_value": val}
-            elif ("loss" in metric_key or "error" in metric_key) and val < best_val:
+            if (("acc" in metric_key or "f1" in metric_key) and val > best_val) or (("loss" in metric_key or "error" in metric_key) and val < best_val):
                 best_val = val
                 best = {**t, "metric_value": val}
         return best

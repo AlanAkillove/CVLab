@@ -1,6 +1,5 @@
 """Loss 异常检测模块测试。"""
 
-import math
 
 from cvlab.diagnose.loss import LossDetector
 

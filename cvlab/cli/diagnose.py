@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import argparse
 
+from cvlab.cli.console import error, header, info, result, table, warning
 from cvlab.i18n import _
-from cvlab.cli.console import console, error, header, info, result, table, warning
 
 
 def cmd_diagnose(args: argparse.Namespace) -> int:

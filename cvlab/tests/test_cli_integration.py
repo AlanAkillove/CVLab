@@ -9,7 +9,6 @@ from pathlib import Path
 import pytest
 import yaml
 
-
 # ── 辅助函数 ──────────────────────────────────────────────
 
 def run_cli(*args: str, cwd: str | None = None) -> subprocess.CompletedProcess:

@@ -20,7 +20,7 @@ def generate_grid(params: dict[str, list[Any]]) -> list[dict[str, Any]]:
     values = list(params.values())
     combinations: list[dict[str, Any]] = []
     for combo in itertools.product(*values):
-        combinations.append(dict(zip(keys, combo)))
+        combinations.append(dict(zip(keys, combo, strict=False)))
     return combinations
 
 

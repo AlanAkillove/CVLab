@@ -1,6 +1,5 @@
 """模型性能画像模块测试。"""
 
-import torch
 import torch.nn as nn
 
 from cvlab.profile.model_card import ModelProfiler, flops_to_text

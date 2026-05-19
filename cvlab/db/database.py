@@ -7,7 +7,10 @@ import sqlite3
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import pandas as pd
 
 from cvlab.db.schema import SCHEMA_SQL
 
@@ -106,7 +109,7 @@ class Database:
     def update_experiment(self, experiment_id: str, **kwargs) -> None:
         kwargs["updated_at"] = self._now()
         sets = ", ".join(f"{k}=?" for k in kwargs)
-        values = list(kwargs.values()) + [experiment_id]
+        values = [*list(kwargs.values()), experiment_id]
         self._conn.execute(
             f"UPDATE experiments SET {sets} WHERE id=?", values
         )
@@ -147,7 +150,7 @@ class Database:
         return [dict(r) for r in rows]
 
     def get_metrics_dataframe(self, experiment_id: str,
-                                keys: list[str] | None = None) -> "pd.DataFrame":
+                                keys: list[str] | None = None) -> pd.DataFrame:
         """返回 pandas DataFrame，每列为指标，索引为 step。"""
         import pandas as pd
         rows = self.get_metrics(experiment_id, keys)

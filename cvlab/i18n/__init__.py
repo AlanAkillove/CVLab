@@ -15,9 +15,10 @@
 
 from __future__ import annotations
 
+import contextlib
+import json
 import locale
 import os
-import json
 import threading
 from pathlib import Path
 from typing import Any
@@ -70,7 +71,7 @@ def set_language(lang: str) -> None:
     Args:
         lang: 语言代码，如 "zh" 或 "en"。
     """
-    valid = {l["code"] for l in get_available_languages()}
+    valid = {info["code"] for info in get_available_languages()}
     if lang not in valid:
         lang = "zh"
     _current_lang.value = lang
@@ -88,12 +89,12 @@ def _load_translations(lang: str) -> dict[str, str]:
         return {}
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         _translations[lang] = data
         _loaded.add(lang)
         return data
-    except (json.JSONDecodeError, IOError) as e:
+    except (OSError, json.JSONDecodeError):
         _loaded.add(lang)
         _translations[lang] = {}
         return {}
@@ -121,10 +122,8 @@ def _(text: str, *args: Any, **kwargs: Any) -> str:
         translated = translations.get(text, text)
 
     if args or kwargs:
-        try:
+        with contextlib.suppress(IndexError, KeyError):
             translated = translated.format(*args, **kwargs)
-        except (IndexError, KeyError):
-            pass
 
     return translated
 

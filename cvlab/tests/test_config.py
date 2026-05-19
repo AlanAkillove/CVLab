@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import copy
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -27,7 +26,6 @@ from cvlab.config.config import (
     save_config,
     validate_config,
 )
-
 
 # ── DEFAULT_CONFIG ────────────────────────────────────────
 

@@ -1,8 +1,5 @@
 """Tracker 核心测试（不需要 GPU）。"""
 
-import json
-import tempfile
-from pathlib import Path
 
 import pytest
 import torch

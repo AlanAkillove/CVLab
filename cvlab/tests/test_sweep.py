@@ -3,7 +3,7 @@
 import tempfile
 
 from cvlab.db.database import Database
-from cvlab.sweep.grid import generate_grid, count_grid
+from cvlab.sweep.grid import count_grid, generate_grid
 from cvlab.sweep.random import sample_random
 from cvlab.sweep.sweeper import Sweeper
 

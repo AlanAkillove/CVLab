@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -168,7 +167,7 @@ class DataLoaderProfiler:
         """
         times: list[float] = []
         iterator = iter(loader)
-        for i in range(num_batches):
+        for _i in range(num_batches):
             start = time.perf_counter()
             try:
                 _ = next(iterator)

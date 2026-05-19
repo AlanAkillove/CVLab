@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import json
-import os
 import re
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import torch
 import torch.nn as nn
-
-from cvlab.checkpoint.ema import detect_and_save_ema
 
 if TYPE_CHECKING:
     from cvlab.db.database import Database

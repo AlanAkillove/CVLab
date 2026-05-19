@@ -2,7 +2,7 @@
 
 import time
 
-from cvlab.diagnose.io_bottleneck import IOBottleneckDetector, DataLoaderProfiler
+from cvlab.diagnose.io_bottleneck import DataLoaderProfiler, IOBottleneckDetector
 
 
 class TestIOBottleneckDetector:

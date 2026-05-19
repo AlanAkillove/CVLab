@@ -7,11 +7,10 @@ no third-party UI libraries.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 import streamlit as st
 
-from cvlab.i18n import _, current_language, set_language, get_available_languages
+from cvlab.i18n import _, current_language, get_available_languages
 
 
 def load_css() -> None:
@@ -131,7 +130,7 @@ def metric_row(cards: list[tuple[str, str, str | None]]) -> None:
         cards: [(label, value, sublabel), ...].
     """
     cols = st.columns(len(cards))
-    for col, (label, value, sublabel) in zip(cols, cards):
+    for col, (label, value, sublabel) in zip(cols, cards, strict=False):
         with col:
             metric_card(label, value, sublabel)
 
@@ -186,10 +185,11 @@ def specimen_slide(image_path: str, caption: str = "") -> None:
         caption: Image caption (translated).
     """
     caption_text = _(caption) if caption else ""
+    slide_label = f'<div class="slide-label">{caption_text}</div>' if caption_text else ""
     st.markdown(
         f'<div class="specimen-slide">'
         f'<img src="file://{image_path}" style="width:100%;height:auto;display:block;" loading="lazy" />'
-        f'{"<div class=\"slide-label\">" + caption_text + "</div>" if caption_text else ""}'
+        f'{slide_label}'
         f'</div>',
         unsafe_allow_html=True,
     )

@@ -5,19 +5,19 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-import streamlit as st
 import pandas as pd
+import streamlit as st
 
+from cvlab.data.provenance import ProvenanceTracker
 from cvlab.db.database import Database
 from cvlab.i18n import _
 from cvlab.ui.components.layout import (
-    section_header,
-    metric_card,
     divider,
     inject_language_switcher,
+    metric_card,
+    section_header,
     sidebar_footer,
 )
-from cvlab.data.provenance import ProvenanceTracker
 
 
 def show_datasets():

@@ -25,7 +25,6 @@ from cvlab.i18n import (
     set_language,
 )
 
-
 # ── 辅助 fixture ──────────────────────────────────────────
 
 @pytest.fixture(autouse=True)

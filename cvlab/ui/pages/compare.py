@@ -11,9 +11,9 @@ from cvlab.core.utils import flatten_dict
 from cvlab.db.database import Database
 from cvlab.i18n import _
 from cvlab.ui.components.layout import (
-    section_header,
     divider,
     inject_language_switcher,
+    section_header,
     sidebar_footer,
 )
 
