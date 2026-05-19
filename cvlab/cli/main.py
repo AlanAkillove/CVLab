@@ -203,9 +203,9 @@ def _cmd_show(args: argparse.Namespace) -> int:
 
     if exp.get("config_json"):
         try:
-            config = json.loads(exp["config_json"])
-            panel("", title=_("超参配置"))
-            console.print(json.dumps(config, indent=2, default=str))
+            config_raw = json.loads(exp["config_json"])
+            config_str = json.dumps(config_raw, indent=2, default=str)
+            panel(config_str, title=_("超参配置"))
         except json.JSONDecodeError:
             info(f"{_('配置')}: {exp['config_json'][:200]}...")
 

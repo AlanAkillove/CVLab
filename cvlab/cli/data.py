@@ -37,10 +37,13 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
     report = analyzer.analyze()
 
     result(_("名称"), report.name)
+    result(_("格式"), report.format_detected)
     result(_("样本总数"), str(report.total_samples))
     result(_("类别数"), str(report.total_classes))
     result(_("总大小"), f"{report.total_size_mb:.1f} MB")
     result(_("标注文件"), _("有") if report.has_annotation else _("无"))
+    if report.annotation_format:
+        result(_("标注格式"), report.annotation_format)
 
     if report.image_formats:
         header(_("图片格式分布"))
