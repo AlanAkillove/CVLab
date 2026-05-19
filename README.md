@@ -176,10 +176,16 @@ cvlab train --config config.yaml
 ### Web UI
 
 ```bash
-streamlit run cvlab/ui/app.py
+# 自动解析 app.py 路径，无需手动查找
+cvlab ui
+
+# 指定端口和语言
+cvlab ui --port 8502 --lang en
 ```
 
 在浏览器中打开 `http://localhost:8501`，右上角可切换语言和深色模式。
+
+> 作为第三方库安装后，无需知道 `app.py` 的安装路径，`cvlab ui` 会自动处理。
 
 ---
 
@@ -203,6 +209,7 @@ streamlit run cvlab/ui/app.py
 | `cvlab data analyze <path>` | 数据集分析 |
 | `cvlab data check <path>` | 数据血缘检查 |
 | `cvlab data history` | 数据集快照历史 |
+| `cvlab ui [--port] [--lang]` | 启动 Web 界面 |
 
 ---
 

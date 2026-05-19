@@ -365,6 +365,34 @@ data:
 
 创建 `.cvlab/` 目录用于存放 SQLite 数据库、Checkpoints、Artifacts。
 
+### `cvlab ui`
+
+启动 Streamlit Web 界面（v0.2.1 新增）。
+
+```
+用法: cvlab ui [options]
+
+可选:
+  --port, -p <int>    端口号（默认 8501）
+  --host <str>        监听地址（默认 127.0.0.1，使用 0.0.0.0 允许外部访问）
+  --lang <str>        界面语言（zh/en，默认自动检测）
+```
+
+自动解析 `app.py` 路径，用户无需手动寻找。
+
+```bash
+# 默认启动
+cvlab ui
+
+# 指定端口和语言
+cvlab ui --port 8502 --lang en
+
+# 局域网访问
+cvlab ui --host 0.0.0.0
+```
+
+> 需要先安装 streamlit：`pip install streamlit`
+
 ### `cvlab help`
 
 显示命令帮助概览。
@@ -591,7 +619,19 @@ CVLab 会自动重试（每次减小 20% Batch Size）。若仍失败，尝试�
 cvlab compare exp_001 exp_002 [--metric val/acc]
 
 # 方式二：Streamlit UI 交互式对比
-streamlit run cvlab/ui/app.py  # → Compare 页面
+cvlab ui  # → Compare 页面
 ```
 
 CLI 对比输出 Rich 高亮表格，适合终端内快速查看差异。UI 对比提供交互式曲线叠加，适合深度分析。
+
+### Q: 如何启动 Web UI？
+
+```bash
+# 只需一条命令，自动解析 app.py 路径
+cvlab ui
+
+# 指定端口
+cvlab ui --port 8502 --lang en
+```
+
+> 需要先安装 streamlit：`pip install streamlit`

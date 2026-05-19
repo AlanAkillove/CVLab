@@ -179,10 +179,16 @@ cvlab train --config config.yaml
 ### Web UI
 
 ```bash
-streamlit run cvlab/ui/app.py
+# Auto-resolves app.py path — no need to search for it
+cvlab ui
+
+# Custom port and language
+cvlab ui --port 8502 --lang zh
 ```
 
 Open `http://localhost:8501` in your browser. Language switching and dark mode toggle are available in the top-right corner.
+
+> When installed as a third-party library, you don't need to know where `app.py` lives. `cvlab ui` handles it automatically.
 
 ---
 
@@ -206,6 +212,7 @@ Open `http://localhost:8501` in your browser. Language switching and dark mode t
 | `cvlab data analyze <path>` | Dataset analysis |
 | `cvlab data check <path>` | Data provenance check |
 | `cvlab data history` | Dataset snapshot history |
+| `cvlab ui [--port] [--lang]` | Launch Web UI |
 
 ---
 
