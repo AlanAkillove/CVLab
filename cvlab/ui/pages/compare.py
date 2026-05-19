@@ -67,8 +67,7 @@ def show_compare():
             })
 
     if info_rows:
-        st.dataframe(pd.DataFrame(info_rows), width='stretch', hide_index=True,
-                     width='stretch')
+        st.dataframe(pd.DataFrame(info_rows), width='stretch', hide_index=True)
 
     divider()
 
@@ -96,8 +95,7 @@ def show_compare():
             for i, eid in enumerate(selected):
                 row[eid[:16]] = str(configs[i].get(key, "—")) if i < len(configs) else "—"
             config_rows.append(row)
-        st.dataframe(pd.DataFrame(config_rows), width='stretch', hide_index=True,
-                     width='stretch')
+        st.dataframe(pd.DataFrame(config_rows), width='stretch', hide_index=True)
 
     divider()
 
@@ -140,7 +138,6 @@ def show_compare():
         summary_rows.append(row)
 
     if summary_rows:
-        st.dataframe(pd.DataFrame(summary_rows), width='stretch', hide_index=True,
-                     width='stretch')
+        st.dataframe(pd.DataFrame(summary_rows), width='stretch', hide_index=True)
 
     sidebar_footer()
