@@ -1,4 +1,4 @@
-"""cvlab train - 执行分类训练（子进程 + OOM 恢复）。"""
+"""cvlab train - 执行分类训练（子进程 + OOM 恢复 + Webhook 通知）。"""
 
 from __future__ import annotations
 
@@ -23,7 +23,11 @@ def cmd_train(args: argparse.Namespace) -> int:
     # --resume 模式：直接运行，不经过子进程
     if args.resume:
         try:
-            exp_id = train_classification(str(config_path), experiment_id=args.resume)
+            from cvlab.core.notifier import WebhookNotifier
+            notifier = WebhookNotifier(args.webhook) if args.webhook else None
+
+            exp_id = train_classification(str(config_path), experiment_id=args.resume,
+                                          webhook_notifier=notifier)
             result(_("完成"), _("实验: {}").format(exp_id))
             return 0
         except Exception as e:
@@ -36,9 +40,7 @@ def cmd_train(args: argparse.Namespace) -> int:
 
 
 def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int:
-    # 验证配置
     config = load_config(str(config_path))
-    # CLI 参数覆盖配置
     if args.seed is not None:
         config["seed"] = args.seed
     if args.batch_size is not None:
@@ -55,21 +57,27 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
             console.print(f"  [red][FAIL][/red] {e}")
         return 1
 
-    # 在主进程中创建实验记录，获取实验 ID
+    # 初始化 webhook notifier
+    from cvlab.core.notifier import WebhookNotifier
+    notifier = WebhookNotifier(args.webhook) if args.webhook else None
+
     header(_("创建实验"))
     tracker = Tracker(config=config)
     exp_id = tracker.experiment_id
     result(_("实验 ID"), exp_id)
 
+    if notifier:
+        info(_("Webhook 通知已启用"))
+        notifier.notify_complete(exp_id=exp_id, epochs=0, extra={"status": "started"})
+
     batch_size = config.get("training", {}).get("batch_size", 64)
     max_retries = 2
-    oom_reduction_factor = 0.8  # 每次 OOM batch size 减小 20%
+    oom_reduction_factor = 0.8
 
     for attempt in range(max_retries + 1):
         if attempt == 0:
             current_bs = batch_size
         else:
-            # 每次减小 20% 而非减半，避免过度激进
             from math import ceil
             current_bs = max(1, ceil(batch_size * (oom_reduction_factor ** attempt)))
 
@@ -79,8 +87,9 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
                 exp_id, "running",
                 failure_reason=f"OOM retry #{attempt}, batch_size={current_bs}",
             )
+            if notifier:
+                notifier.notify_oom(exp_id=exp_id, attempt=attempt, batch_size=current_bs)
 
-        # 子进程继承父进程 stdout/stderr，保证 Rich 输出正常显示
         info(_("启动训练子进程 (attempt {}/{})").format(attempt + 1, max_retries + 1))
         proc = subprocess.run(
             [
@@ -93,29 +102,34 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
 
         if proc.returncode == 0:
             result(_("完成"), _("实验: {}").format(exp_id))
+            if notifier:
+                notifier.notify_complete(exp_id=exp_id, epochs=config.get("training", {}).get("epochs", 0))
             return 0
 
-        # OOM 检测：exit code 137 (CUDA OOM / RuntimeError / system OOM killing)
         is_oom = proc.returncode == 137
         if is_oom and attempt < max_retries and current_bs > 1:
             continue
 
-        # 不可恢复的错误
         if is_oom:
             msg = _("训练失败 (OOM, 已重试 {} 次)").format(max_retries)
             error(msg)
             tracker.db.update_experiment_status(
                 exp_id, "failed", failure_reason="OOM after retries",
             )
+            if notifier:
+                notifier.notify_failed(exp_id=exp_id, reason="OOM after retries")
         else:
             msg = _("训练失败 (exit code {})").format(proc.returncode)
             error(msg)
             tracker.db.update_experiment_status(
                 exp_id, "failed", failure_reason=f"exit code {proc.returncode}",
             )
+            if notifier:
+                notifier.notify_failed(exp_id=exp_id, reason=f"exit code {proc.returncode}", error_msg=msg)
+
         return 1
 
-    return 1  # 不应到达这里
+    return 1
 
 
 def add_subparser(sub) -> None:
@@ -127,4 +141,5 @@ def add_subparser(sub) -> None:
     p.add_argument("--epochs", type=int, help=_("覆盖训练轮数"))
     p.add_argument("--lr", type=float, help=_("覆盖学习率"))
     p.add_argument("--name", help=_("覆盖实验名称"))
+    p.add_argument("--webhook", help=_("训练完成/失败时发送 Webhook 通知（支持 Slack/飞书/钉钉）"))
     p.set_defaults(func=cmd_train)

@@ -19,13 +19,15 @@ from cvlab.i18n import _
 
 def train_classification(config_path: str,
                          experiment_id: str | None = None,
-                         batch_size: int | None = None) -> str:
+                         batch_size: int | None = None,
+                         webhook_notifier=None) -> str:
     """执行分类训练。
 
     Args:
         config_path: YAML 配置文件路径。
         experiment_id: 实验 ID（子进程模式，复用已有实验）。
         batch_size: 覆盖配置中的 batch_size（OOM 恢复时使用）。
+        webhook_notifier: WebhookNotifier 实例（可选）。
 
     Returns:
         实验 ID。
@@ -116,6 +118,21 @@ def train_classification(config_path: str,
     # 损失函数
     criterion = nn.CrossEntropyLoss()
 
+    # 预测样本时间轴：取固定 batch 用于可视化
+    log_images = config.get("logging", {}).get("log_images", False)
+    _sample_images = None
+    _sample_labels = None
+    if log_images:
+        try:
+            _sample_iter = iter(val_loader)
+            _sample_images, _sample_labels = next(_sample_iter)
+            _sample_images = _sample_images[:16]  # 最多 16 张
+            _sample_labels = _sample_labels[:16]
+            info(_("预测样本时间轴已启用 ({} samples)").format(len(_sample_images)))
+        except (StopIteration, RuntimeError):
+            warning(_("无法获取验证样本用于可视化"))
+            log_images = False
+
     # 训练循环
     header(_("训练开始"))
     pbar = progress()
@@ -149,6 +166,17 @@ def train_classification(config_path: str,
                 "lr": optimizer.param_groups[0]["lr"],
             }, epoch)
 
+            # 预测样本时间轴（log_images 开启时）
+            if log_images and _sample_images is not None and epoch % max(1, config["training"]["epochs"] // 5) == 0:
+                try:
+                    model.eval()
+                    with torch.no_grad():
+                        _sample_preds = model(_sample_images.to(device)).argmax(dim=1).cpu()
+                    _log_prediction_samples(tracker, _sample_images, _sample_labels, _sample_preds,
+                                             class_names, epoch)
+                except Exception as e:
+                    warning(_("预测样本记录失败: {}").format(e))
+
             # 保存 checkpoint
             is_best = val_acc > best_acc
             if is_best:
@@ -169,6 +197,19 @@ def train_classification(config_path: str,
 
     tracker.finish("completed")
 
+    # Webhook 通知
+    if webhook_notifier:
+        try:
+            webhook_notifier.notify_complete(
+                exp_id=tracker.experiment_id,
+                val_acc=best_acc,
+                val_loss=val_loss,
+                epochs=config["training"]["epochs"],
+                duration=f"{time.perf_counter() - epoch_start:.0f}s",
+            )
+        except Exception as e:
+            warning(_("Webhook 通知失败: {}").format(e))
+
     # 生成报告
     header(_("报告生成"))
     try:
@@ -187,6 +228,47 @@ def train_classification(config_path: str,
     result(_("状态"), "completed")
 
     return tracker.experiment_id
+
+
+def _log_prediction_samples(
+    tracker,
+    images: torch.Tensor,
+    labels: torch.Tensor,
+    predictions: torch.Tensor,
+    class_names: list[str],
+    epoch: int,
+) -> None:
+    """将预测样本拼接为网格图并记录到 tracker。"""
+    import torchvision.utils as vutils
+
+    # 创建标签文本
+    n = min(images.size(0), 16)
+    denorm_images = images[:n].clone()
+    # 反归一化 (ImageNet stats)
+    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
+    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
+    denorm_images = denorm_images * std + mean
+    denorm_images = denorm_images.clamp(0, 1)
+
+    # 创建网格
+    grid = vutils.make_grid(denorm_images, nrow=4, padding=4, pad_value=1.0)
+    grid_np = grid.permute(1, 2, 0).numpy()
+
+    tracker.log_image("predictions", grid_np, step=epoch,
+                      caption=f"Epoch {epoch+1}")
+
+    # 记录预测文本摘要
+    correct = (predictions[:n] == labels[:n]).sum().item()
+    total_display = min(n, len(predictions))
+    tracker.log({"pred_sample/accuracy": correct / max(total_display, 1)}, epoch)
+
+
+class CVLabDataModule:
+    """数据集自动选择与加载。"""
+
+    @staticmethod
+    def load(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
+        return _load_data(config)
 
 
 def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:

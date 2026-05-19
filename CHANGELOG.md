@@ -1,5 +1,34 @@
 # Changelog
 
+## 0.2.3 (2026-05-19) — Feature Growth
+
+### New Features
+- **`cvlab tag`** — experiment tag management CLI
+  ```bash
+  cvlab tag add exp_001 baseline       # add tag
+  cvlab tag remove exp_001 baseline    # remove tag
+  cvlab tag list                       # list all tags
+  cvlab tag search baseline            # search experiments by tag
+  ```
+- **`cvlab note`** — experiment note editing CLI
+  ```bash
+  cvlab note exp_001                    # view note
+  cvlab note exp_001 "lr too high"     # set note
+  cvlab note exp_001 --clear           # clear note
+  ```
+- **`cvlab export`** — model export to ONNX / TorchScript
+  ```bash
+  cvlab export --checkpoint best.pt --format onnx --input 1x3x224x224
+  cvlab export --checkpoint best.pt --format torchscript --script-mode trace
+  ```
+  Includes input shape validation, forward pass verification, auto model reconstruction.
+- **Prediction sample timeline** — when `log_images: true` in config, automatically saves prediction visualizations every N epochs during training
+- **Webhook notification system** — training complete/failure/OOM notifications
+  ```bash
+  cvlab train --config config.yaml --webhook https://hooks.slack.com/xxx
+  ```
+  Auto-detects Slack / Feishu / DingTalk / generic webhook formats.
+
 ## 0.2.2 (2026-05-19) — Third-Party Library Usability
 
 ### New Feature

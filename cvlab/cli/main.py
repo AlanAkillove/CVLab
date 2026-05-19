@@ -23,9 +23,12 @@ def main(argv: list[str] | None = None) -> int:
     from cvlab.cli.compare import add_subparser as add_compare
     from cvlab.cli.data import add_subparser as add_data
     from cvlab.cli.diagnose import add_subparser as add_diagnose
+    from cvlab.cli.export import add_subparser as add_export
     from cvlab.cli.help_ import add_subparser as add_help
+    from cvlab.cli.note import add_subparser as add_note
     from cvlab.cli.profile import add_subparser as add_profile
     from cvlab.cli.sweep import add_subparser as add_sweep
+    from cvlab.cli.tag import add_subparser as add_tag
     from cvlab.cli.train import add_subparser as add_train
     from cvlab.cli.ui import add_subparser as add_ui
     from cvlab.cli.weights import add_subparser as add_weights
@@ -38,6 +41,9 @@ def main(argv: list[str] | None = None) -> int:
     add_weights(sub)
     add_diagnose(sub)
     add_data(sub)
+    add_export(sub)
+    add_tag(sub)
+    add_note(sub)
     add_help(sub)
 
     # cvlab init
