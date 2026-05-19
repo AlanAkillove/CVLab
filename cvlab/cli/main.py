@@ -99,20 +99,20 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
     # 欢迎面板
     console.print()
-    console.print("[bold cyan]" + "=" * 50 + "[/bold cyan]")
-    console.print(_("[bold]  CVLab {} 初始化成功![/bold]").format("v0.2.5"))
-    console.print("[bold cyan]" + "=" * 50 + "[/bold cyan]")
+    console.print("[bold cyan]" + "-" * 40 + "[/bold cyan]")
+    console.print(_("[bold]  CVLab {} Ready![/bold]").format("v0.2.5"))
+    console.print("[bold cyan]" + "-" * 40 + "[/bold cyan]")
     console.print()
-    console.print(_("  \u2713 数据目录: {}").format(str(cvlab_dir.resolve())))
-    console.print(_("  \u2713 配置模板: {}").format(str(config_path.resolve())))
+    console.print(_("  [OK] {}").format(str(cvlab_dir.resolve())))
+    console.print(_("  [OK] {}").format(str(config_path.resolve())))
     console.print()
-    console.print(_("  [bold]接下来你可以:[/bold]"))
-    console.print(_("    1. 编辑配置:  {}").format("edit .cvlab/config.yaml"))
-    console.print(_("    2. 启动训练:  {}").format("cvlab train --config .cvlab/config.yaml"))
-    console.print(_("    3. 查看实验:  {}").format("cvlab list"))
-    console.print(_("    4. Web 界面:  {}").format("cvlab ui"))
+    console.print(_("  [bold]Next steps:[/bold]"))
+    console.print(_("    1. Edit config:  {}").format("edit .cvlab/config.yaml"))
+    console.print(_("    2. Start training: {}").format("cvlab train --config .cvlab/config.yaml"))
+    console.print(_("    3. View experiments: {}").format("cvlab list"))
+    console.print(_("    4. Web UI: {}").format("cvlab ui"))
     console.print()
-    console.print(_("  [dim]更多: cvlab help | 完整文档: README.md[/dim]"))
+    console.print(_("  [dim]More: cvlab help | README.md[/dim]"))
     console.print()
     return 0
 
@@ -149,7 +149,7 @@ seed: 42
 def _cmd_list(args: argparse.Namespace) -> int:
     import json
 
-    from cvlab.cli.console import header, info, result, table
+    from cvlab.cli.console import console, header, info, result
     from cvlab.db.database import Database
     from cvlab.i18n import _
 
@@ -161,21 +161,20 @@ def _cmd_list(args: argparse.Namespace) -> int:
         return 0
 
     header(_("实验列表"))
-    rows = []
+    # 每行一条实验，简单对齐格式（避免 Rich 在窄终端上截断 ID）
     for e in exps:
         cfg = {}
         from contextlib import suppress
         with suppress(json.JSONDecodeError, TypeError):
             cfg = json.loads(e.get("config_json", "{}")) if isinstance(e.get("config_json"), str) else e.get("config_json", {})
         model = cfg.get("model", {}).get("name", "")[:12] if isinstance(cfg, dict) else ""
-        rows.append([
-            e["id"][:28],
-            e["name"][:20],
-            model,
-            e["status"],
-            e["created_at"][:16] if e.get("created_at") else "",
-        ])
-    table("", [_("ID"), _("名称"), _("模型"), _("状态"), _("创建时间")], rows)
+        status_icon = {
+            "completed": "[green]*[/green]",
+            "failed": "[red]![/red]",
+            "running": "[yellow]~[/yellow]",
+            "created": "[dim]-[/dim]",
+        }.get(e["status"], "?")
+        console.print(f"  {status_icon}  {e['id']}  [dim]{e['name'][:24]}[/dim]  [cyan]{model}[/cyan]")
     result(_("总计"), f"{len(exps)} {_('实验')}")
     return 0
 

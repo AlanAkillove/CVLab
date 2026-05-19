@@ -113,7 +113,7 @@ def plot_metric_overlay(
             yaxis_title="Value",
             template="swiss",
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width='stretch')
     else:
         st.info(f"{_('无')} {metric_key} {_('数据')}")
 
@@ -135,7 +135,7 @@ def plot_single_metric(
     )
     fig.update_traces(line=dict(width=1.5, color="#E4002B"))
     fig.update_layout(template="swiss")
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 def plot_confusion_matrix(
@@ -162,7 +162,7 @@ def plot_confusion_matrix(
     )
     fig.update_xaxes(tickangle=45)
     fig.update_yaxes(tickangle=0)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 def plot_trial_comparison(
@@ -188,4 +188,4 @@ def plot_trial_comparison(
         showlegend=False,
         coloraxis_showscale=False,
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')

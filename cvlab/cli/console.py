@@ -26,10 +26,16 @@ def result(label: str, value: str, ok: bool = True) -> None:
 
 
 def table(title: str, columns: list[str], rows: list[list[Any]]) -> None:
-    """打印格式化表格。"""
-    t = Table(title=title, box=box.ROUNDED, header_style="bold cyan")
-    for col in columns:
-        t.add_column(col)
+    """打印格式化表格（ID 列完整显示，不截断不折叠）。"""
+    t = Table(
+        title=title, box=box.ROUNDED, header_style="bold cyan",
+        padding=(0, 1), safe_box=True,
+    )
+    for i, col in enumerate(columns):
+        if i == 0:
+            t.add_column(col, no_wrap=True)
+        else:
+            t.add_column(col, no_wrap=True)
     for row in rows:
         t.add_row(*(str(r) for r in row))
     console.print(t)

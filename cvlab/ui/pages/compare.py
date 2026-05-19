@@ -20,7 +20,7 @@ from cvlab.ui.components.layout import (
 
 def show_compare():
     inject_language_switcher()
-    st.title("Compare")
+    st.title(_("Compare"))
 
     db = Database()
     exps = db.list_experiments(limit=100)
@@ -68,7 +68,7 @@ def show_compare():
 
     if info_rows:
         st.dataframe(pd.DataFrame(info_rows), width='stretch', hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
     divider()
 
@@ -97,7 +97,7 @@ def show_compare():
                 row[eid[:16]] = str(configs[i].get(key, "—")) if i < len(configs) else "—"
             config_rows.append(row)
         st.dataframe(pd.DataFrame(config_rows), width='stretch', hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
     divider()
 
@@ -141,6 +141,6 @@ def show_compare():
 
     if summary_rows:
         st.dataframe(pd.DataFrame(summary_rows), width='stretch', hide_index=True,
-                     use_container_width=True)
+                     width='stretch')
 
     sidebar_footer()

@@ -22,7 +22,7 @@ from cvlab.ui.components.layout import (
 
 def show_experiment_detail():
     inject_language_switcher()
-    st.title("Experiment Detail")
+    st.title(_("Experiment Detail"))
 
     db = Database()
     exps = db.list_experiments(limit=50)
@@ -167,14 +167,32 @@ def show_experiment_detail():
     ckpts = db.get_checkpoints(selected_id)
     if ckpts:
         section_header(_("Checkpoints"), badge=str(len(ckpts)))
+
         ckpt_df = pd.DataFrame(ckpts)
         display_cols = [c for c in ["epoch", "metric_name", "metric_value", "is_best", "file_size"]
                         if c in ckpt_df.columns]
+
+        # 显示表格
         if display_cols:
-            st.dataframe(ckpt_df[display_cols], width='stretch', hide_index=True,
-                         use_container_width=True)
+            st.dataframe(ckpt_df[display_cols], width='stretch', hide_index=True)
         else:
-            st.dataframe(ckpt_df, width='stretch', hide_index=True, use_container_width=True)
+            st.dataframe(ckpt_df, width='stretch', hide_index=True)
+
+        # 导出 CSV
+        csv = ckpt_df.to_csv(index=False)
+        col_csv1, col_csv2 = st.columns([1, 3])
+        with col_csv1:
+            st.download_button(
+                label=_("导出 CSV"),
+                data=csv,
+                file_name=f"checkpoints_{selected_id}.csv",
+                mime="text/csv",
+                key=f"dl_ckpt_{selected_id}",
+            )
+        with col_csv2:
+            # 显示 CSV 预览供复制
+            with st.expander(_("CSV 预览 (可复制)")):
+                st.code(csv, language="csv")
 
     divider()
 
@@ -187,7 +205,7 @@ def show_experiment_detail():
             with st.expander(label):
                 if art.get("file_path"):
                     try:
-                        st.image(art["file_path"], width='stretch', use_container_width=True)
+                        st.image(art["file_path"], width='stretch')
                     except Exception:
                         st.caption("(image unavailable)")
 

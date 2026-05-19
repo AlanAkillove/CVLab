@@ -21,7 +21,7 @@ from cvlab.ui.components.layout import (
 
 def show_experiments():
     inject_language_switcher()
-    st.title("Experiments")
+    st.title(_("Experiments"))
 
     db = Database()
 

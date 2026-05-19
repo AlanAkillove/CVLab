@@ -22,7 +22,7 @@ from cvlab.ui.components.layout import (
 
 def show_datasets():
     inject_language_switcher()
-    st.title("Datasets")
+    st.title(_("Datasets"))
 
     db = Database()
 
@@ -203,7 +203,7 @@ def _render_dataset_card(db: Database, ds: dict) -> None:
                 if version_rows:
                     df = pd.DataFrame(version_rows)
                     st.dataframe(df, width='stretch', hide_index=True,
-                                 use_container_width=True)
+                                 width='stretch')
 
                     # File type breakdown for latest version
                     latest = versions[0]
@@ -229,6 +229,6 @@ def _render_dataset_card(db: Database, ds: dict) -> None:
                             for ext, count in sorted(ext_data.items())
                         ])
                         st.dataframe(ext_df, width='stretch', hide_index=True,
-                                     use_container_width=True)
+                                     width='stretch')
 
         divider()

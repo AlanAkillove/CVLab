@@ -17,7 +17,7 @@ from cvlab.ui.components.layout import (
 
 def show_diagnostics():
     inject_language_switcher()
-    st.title("Diagnostics")
+    st.title(_("Diagnostics"))
 
     probe = EnvironmentProbe()
 

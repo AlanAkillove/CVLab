@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>experiment_0519_1110 - CVLab</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a2e; background: #f8f9fa; line-height: 1.6; padding: 40px 20px; }
+  .container { max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.8em; margin-bottom: 8px; }
+  h2 { font-size: 1.3em; margin: 32px 0 16px; padding-bottom: 8px; border-bottom: 2px solid #e9ecef; }
+  h3 { font-size: 1.1em; margin: 20px 0 10px; }
+  .meta { color: #666; font-size: 0.9em; margin-bottom: 24px; }
+  .meta span { margin-right: 20px; }
+  table { width: 100%; border-collapse: collapse; margin: 12px 0 24px; }
+  th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #e9ecef; }
+  th { background: #f1f3f5; font-weight: 600; font-size: 0.85em; text-transform: uppercase; letter-spacing: 0.5px; color: #495057; }
+  td { font-size: 0.9em; }
+  .card { background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .badge { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 0.8em; font-weight: 500; }
+  .badge-completed { background: #d3f9d8; color: #2b8a3e; }
+  .badge-failed { background: #ffe3e3; color: #c92a2a; }
+  .badge-running { background: #fff3bf; color: #e67700; }
+  .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin: 12px 0; }
+  .metric-item { background: #f8f9fa; padding: 12px; border-radius: 6px; text-align: center; }
+  .metric-value { font-size: 1.4em; font-weight: 700; color: #364fc7; }
+  .metric-label { font-size: 0.8em; color: #868e96; margin-top: 4px; }
+  .env-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .env-item { font-size: 0.85em; }
+  .env-key { color: #868e96; }
+  .chart-container { margin: 16px 0; }
+  .warning { background: #fff3bf; border-left: 4px solid #fcc419; padding: 12px 16px; border-radius: 4px; margin: 12px 0; font-size: 0.9em; }
+  @media print { body { padding: 0; } .card { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>experiment_0519_1110</h1>
+  <div class="meta">
+    <span>实验 ID: experiment-0519-1110_0519_9b4e</span>
+    <span>状态: <span class="badge badge-completed">completed</span></span>
+    <span>创建: 2026-05-19T03:10:21</span>
+    <span>生成: 2026-05-19 11:15:14</span>
+  </div>
+
+  
+
+  
+  <div class="card">
+    <h2>训练指标</h2>
+    <div class="metric-grid">
+      
+      <div class="metric-item">
+        <div class="metric-value">1.2697</div>
+        <div class="metric-label">train/loss</div>
+      </div>
+      
+      <div class="metric-item">
+        <div class="metric-value">0.5476</div>
+        <div class="metric-label">train/acc</div>
+      </div>
+      
+      <div class="metric-item">
+        <div class="metric-value">2.2180</div>
+        <div class="metric-label">val/loss</div>
+      </div>
+      
+      <div class="metric-item">
+        <div class="metric-value">0.1937</div>
+        <div class="metric-label">val/acc</div>
+      </div>
+      
+      <div class="metric-item">
+        <div class="metric-value">0.0001</div>
+        <div class="metric-label">lr</div>
+      </div>
+      
+    </div>
+  </div>
+  
+
+  
+  <div class="card">
+    <h2>超参配置</h2>
+    <table>
+      <thead><tr><th>参数</th><th>值</th></tr></thead>
+      <tbody>
+        
+        <tr><td>model.name</td><td>resnet18</td></tr>
+        
+        <tr><td>model.pretrained</td><td>False</td></tr>
+        
+        <tr><td>training.epochs</td><td>5</td></tr>
+        
+        <tr><td>training.batch_size</td><td>64</td></tr>
+        
+        <tr><td>training.accumulation_steps</td><td>1</td></tr>
+        
+        <tr><td>training.optimizer</td><td>adam</td></tr>
+        
+        <tr><td>training.lr</td><td>0.001</td></tr>
+        
+        <tr><td>training.weight_decay</td><td>0.0001</td></tr>
+        
+        <tr><td>training.scheduler</td><td>cosine</td></tr>
+        
+        <tr><td>data.dataset</td><td>.cvlab/data</td></tr>
+        
+        <tr><td>data.num_workers</td><td>0</td></tr>
+        
+        <tr><td>data.pin_memory</td><td>True</td></tr>
+        
+        <tr><td>data.prefetch_factor</td><td>2</td></tr>
+        
+        <tr><td>data.input_size</td><td>[3, 32, 32]</td></tr>
+        
+        <tr><td>data.val_split</td><td>0.2</td></tr>
+        
+        <tr><td>data.dataset_name</td><td>CIFAR10</td></tr>
+        
+        <tr><td>seed</td><td>42</td></tr>
+        
+        <tr><td>checkpoint.save_best_metric</td><td>val_acc</td></tr>
+        
+        <tr><td>checkpoint.save_last</td><td>True</td></tr>
+        
+        <tr><td>checkpoint.keep_last</td><td>5</td></tr>
+        
+        <tr><td>watch.log_gradients</td><td>False</td></tr>
+        
+        <tr><td>watch.log_activations</td><td>False</td></tr>
+        
+        <tr><td>watch.watch_layers</td><td>None</td></tr>
+        
+        <tr><td>watch.log_freq</td><td>50</td></tr>
+        
+      </tbody>
+    </table>
+  </div>
+  
+
+  
+  <div class="card">
+    <h2>环境信息</h2>
+    <div class="env-grid">
+      
+      <div class="env-item"><span class="env-key">os_type:</span> win32</div>
+      
+      <div class="env-item"><span class="env-key">os_version:</span> </div>
+      
+      <div class="env-item"><span class="env-key">python_version:</span> 3.13.13 (main, May  4 2026, 21:18:21) [MSC v.1944 64 bit (AMD64)]</div>
+      
+      <div class="env-item"><span class="env-key">torch_version:</span> 2.11.0+cu128</div>
+      
+      <div class="env-item"><span class="env-key">cuda_version:</span> 12.8</div>
+      
+      <div class="env-item"><span class="env-key">is_wsl:</span> False</div>
+      
+      <div class="env-item"><span class="env-key">cpu_model:</span> </div>
+      
+      <div class="env-item"><span class="env-key">cpu_cores:</span> 10</div>
+      
+      <div class="env-item"><span class="env-key">cpu_threads:</span> 16</div>
+      
+      <div class="env-item"><span class="env-key">total_ram_gb:</span> 15.741806030273438</div>
+      
+      <div class="env-item"><span class="env-key">available_ram_gb:</span> 2.535816192626953</div>
+      
+      <div class="env-item"><span class="env-key">num_gpus:</span> 1</div>
+      
+      <div class="env-item"><span class="env-key">gpus:</span> [{&#34;index&#34;: 0, &#34;name&#34;: &#34;NVIDIA GeForce RTX 4060 Laptop GPU&#34;, &#34;total_memory_gb&#34;: 7.99560546875, &#34;free_memory_gb&#34;: 0.0, &#34;compute_capability&#34;: [8, 9], &#34;supports_tensor_core&#34;: true, &#34;supports_bf16&#34;: true, &#34;driver_version&#34;: &#34;&#34;}]</div>
+      
+      <div class="env-item"><span class="env-key">cuda_mismatch:</span> False</div>
+      
+      <div class="env-item"><span class="env-key">storage_type:</span> unknown</div>
+      
+      <div class="env-item"><span class="env-key">storage_available_gb:</span> 0.0</div>
+      
+    </div>
+  </div>
+  
+
+  
+  <div class="card">
+    <h2>Checkpoints</h2>
+    <table>
+      <thead><tr><th>Epoch</th><th>指标</th><th>最优</th><th>创建时间</th></tr></thead>
+      <tbody>
+        
+        <tr>
+          <td>0</td>
+          <td>0.1751</td>
+          <td></td>
+          <td>2026-05-19T03:11:27</td>
+        </tr>
+        
+        <tr>
+          <td>1</td>
+          <td>0.1706</td>
+          <td></td>
+          <td>2026-05-19T03:12:08</td>
+        </tr>
+        
+        <tr>
+          <td>2</td>
+          <td>0.1861</td>
+          <td></td>
+          <td>2026-05-19T03:13:13</td>
+        </tr>
+        
+        <tr>
+          <td>3</td>
+          <td>0.1880</td>
+          <td></td>
+          <td>2026-05-19T03:14:11</td>
+        </tr>
+        
+        <tr>
+          <td>4</td>
+          <td>0.1937</td>
+          <td>✓</td>
+          <td>2026-05-19T03:15:14</td>
+        </tr>
+        
+      </tbody>
+    </table>
+  </div>
+  
+
+  
+
+  <p style="text-align: center; color: #868e96; font-size: 0.8em; margin-top: 40px;">
+    Generated by CVLab
+  </p>
+</div>
+</body>
+</html>

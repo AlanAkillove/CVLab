@@ -492,5 +492,8 @@
   "Analysis": "Analysis",
   "Compare": "Compare",
   "Sweeps": "Sweeps",
-  "Diagnostics": "Diagnostics"
+  "Diagnostics": "Diagnostics",
+  "导出 CSV": "Export CSV",
+  "CSV 预览 (可复制)": "CSV Preview (copyable)",
+  "复制 CSV": "Copy CSV"
 }

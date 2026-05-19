@@ -21,7 +21,7 @@ from cvlab.ui.components.layout import (
 
 def show_sweep():
     inject_language_switcher()
-    st.title("Sweeps")
+    st.title(_("Sweeps"))
 
     db = Database()
     sweeps = db.list_sweeps()
