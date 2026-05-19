@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.5 (2026-05-19) — UX Overhaul (32 audit fixes)
+
+### UX Improvements (CLI)
+- **`cvlab init` now shows welcome panel** with next-step guidance and generates `config.yaml` template
+- **`cvlab help` now uses grouped display** (Training / Diagnostics / Data / Management)
+- **`cvlab compare`** shows usage hint on wrong arguments
+- **`cvlab weights info/download`** help shows model name examples (resnet18, etc.)
+- **Training log output**: epoch logging now controlled by `logging.log_interval` (default 10)
+
+### Error Handling
+- **Global `--verbose` flag**: traceback hidden by default, shown only with `--verbose`
+- **Config validation expanded**: checks `lr > 0`, `num_workers >= 0`, `input_size` format, `seed` type
+
+### Configuration & Templates
+- `cvlab init` generates `.cvlab/config.yaml` template with full comments
+- Added `examples/sweep.yaml` as standalone sweep configuration file
+- Updated README: clarified GitHub-only install (not on PyPI yet), added 30s quickstart path
+
+### CI/DevOps
+- GitHub Actions: lint and test now run in parallel
+- Added coverage threshold (fail_under = 70%)
+- Makefile: Windows-compatible (`python` vs `python3`), added `test-file` target
+- Dataset download warning shows estimated size (e.g. "CIFAR10 ~170MB")
+
 ## 0.2.4 (2026-05-19) — Readable Experiment IDs
 
 ### UX Improvement

@@ -2,11 +2,15 @@
 
 .DEFAULT_GOAL := help
 
-# Detect OS
-UNAME_S := $(shell uname -s)
+# Detect OS (Windows compatibility)
+ifeq ($(OS),Windows_NT)
+    PYTHON ?= python
+else
+    PYTHON ?= python3
+    UNAME_S := $(shell uname -s)
+endif
 
 # ── Variables ─────────────────────────────────────────────
-PYTHON   ?= python3
 UV       ?= uv
 PIP      ?= pip
 PYTEST   ?= pytest
@@ -74,6 +78,10 @@ test-cov: ## Run tests with coverage
 test-quick: ## Run quick smoke tests only
 	$(UV) run $(PYTEST) cvlab/tests/ -v --tb=short -k "not slow"
 	$(UV) run python -c "from cvlab import Tracker, __version__; print(f'CVLab {__version__}: import OK')"
+
+.PHONY: test-file
+test-file: ## Run a specific test file (usage: make test-file FILE=test_config)
+	$(UV) run $(PYTEST) cvlab/tests/$(FILE) -v --tb=short
 
 # ── Docker ────────────────────────────────────────────────
 .PHONY: docker-build

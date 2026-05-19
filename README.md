@@ -61,21 +61,23 @@ CVLab 是一个轻量级、CV 专精的训练实验管理工具。装一个 `pip
 ### 安装
 
 ```bash
-# 克隆项目
+# 方式一：git clone 安装（当前推荐）
 git clone https://github.com/AlanAkillove/CVLab.git
 cd CVLab
-
-# 推荐使用 uv（也可以使用 pip）
-pip install uv
-uv venv
-uv sync --dev
-
-# 或直接使用 pip
 pip install -e .
 
-# 安装 PyTorch（如无 GPU）
-uv pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# 方式二：使用 uv（更快）
+pip install uv
+uv venv && uv sync --dev
+
+# 首次使用前安装 PyTorch（CPU 版）
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# 查看是否安装成功
+cvlab --version
 ```
+
+> **注意**: CVLab 目前通过 GitHub 分发，暂未上架 PyPI。`pip install cvlab` 会安装其他同名包，请使用上方 git clone 方式。
 
 ### 三行代码接入
 
@@ -116,6 +118,13 @@ print(tracker.get_reproduce_command())
 ---
 
 ## 使用示例
+
+### 快速体验（30 秒，无 GPU 也可运行）
+
+```bash
+cvlab init
+cvlab train --config examples/tiny_cnn.yaml
+```
 
 ### CLI 模式
 

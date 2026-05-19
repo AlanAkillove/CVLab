@@ -1,0 +1,37 @@
+# CVLab 超参扫描（Sweep）配置示例
+# 用法: cvlab sweep create --config sweep.yaml
+
+sweep:                       # 扫描参数定义（使用 sweep: 而非 _sweep）
+  strategy: grid             # grid | random
+  params:
+    training.lr:
+      values: [0.1, 0.01, 0.001]    # Grid: 枚举所有值
+    training.optimizer:
+      values: [sgd, adam]
+    data.augment:
+      values: [true, false]
+
+# Random 搜索示例（取消下面的注释，注释掉上面 grid 部分）
+# sweep:
+#   strategy: random
+#   params:
+#     training.lr:
+#       type: loguniform
+#       range: [0.0001, 0.1]
+#     training.optimizer:
+#       type: choice
+#       values: [sgd, adam, adamw]
+#     training.batch_size:
+#       type: int
+#       range: [32, 256]
+
+# 基础配置（所有 trial 共享）
+model:
+  name: resnet18
+  pretrained: false
+training:
+  epochs: 30
+  batch_size: 64
+data:
+  dataset_name: CIFAR10
+  input_size: [3, 32, 32]

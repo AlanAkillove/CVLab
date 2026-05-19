@@ -91,6 +91,27 @@ def validate_config(config: dict) -> list[str]:
     if training.get("scheduler", "").lower() not in valid_schedulers:
         errors.append(f"training.scheduler 必须为 {valid_schedulers} 之一")
 
+    # 新增校验
+    lr = training.get("lr", None)
+    if lr is not None and (not isinstance(lr, (int, float)) or lr <= 0):
+        errors.append("training.lr 必须为正数")
+
+    data_cfg = config.get("data", {})
+    nw = data_cfg.get("num_workers", 0)
+    if not isinstance(nw, int) or nw < 0:
+        errors.append("data.num_workers 必须为非负整数")
+
+    input_size = data_cfg.get("input_size", None)
+    if input_size is not None:
+        if not isinstance(input_size, (list, tuple)) or len(input_size) not in (2, 3):
+            errors.append("data.input_size 必须为 [C, H, W] 或 [H, W] 格式的列表")
+        elif any(not isinstance(d, int) or d < 1 for d in input_size):
+            errors.append("data.input_size 中的各维度必须为正整数")
+
+    seed = config.get("seed")
+    if seed is not None and not isinstance(seed, int):
+        errors.append("seed 必须为整数")
+
     return errors
 
 

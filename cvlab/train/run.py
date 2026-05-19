@@ -139,6 +139,9 @@ def train_classification(config_path: str,
     epoch_task = pbar.add_task(_("Epochs"), total=config["training"]["epochs"])
     best_acc = 0.0
 
+    # 日志输出频率：默认每 10 个 epoch 输出一行，可通过 logging.log_interval 配置
+    log_interval = config.get("logging", {}).get("log_interval", 10)
+
     with pbar:
         for epoch in range(config["training"]["epochs"]):
             epoch_start = time.perf_counter()
@@ -153,11 +156,9 @@ def train_classification(config_path: str,
 
             epoch_time = time.perf_counter() - epoch_start
 
-            # 更新 LR scheduler (plateau)
             if isinstance(scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
                 scheduler.step(val_loss)
 
-            # 记录指标
             tracker.log({
                 "train/loss": train_loss,
                 "train/acc": train_acc / 100.0,
@@ -166,7 +167,7 @@ def train_classification(config_path: str,
                 "lr": optimizer.param_groups[0]["lr"],
             }, epoch)
 
-            # 预测样本时间轴（log_images 开启时）
+            # 预测样本时间轴
             if log_images and _sample_images is not None and epoch % max(1, config["training"]["epochs"] // 5) == 0:
                 try:
                     model.eval()
@@ -187,13 +188,16 @@ def train_classification(config_path: str,
             }, is_best=is_best)
 
             pbar.update(epoch_task, advance=1)
-            console.print(
-                _("  Epoch {:3d}/{:3d} | train loss: {:.4f} | train acc: {:.2f}% | val acc: {:.2f}% | lr: {:.2e} | {:.1f}s").format(
-                    epoch + 1, config['training']['epochs'],
-                    train_loss, train_acc, val_acc,
-                    optimizer.param_groups[0]['lr'],
-                    epoch_time)
-            )
+
+            # 控制日志输出频率：每 log_interval 个 epoch 打印一行
+            if (epoch + 1) % log_interval == 0 or epoch == 0 or epoch == config["training"]["epochs"] - 1:
+                console.print(
+                    _("  Epoch {:3d}/{:3d} | train loss: {:.4f} | train acc: {:.2f}% | val acc: {:.2f}% | lr: {:.2e} | {:.1f}s").format(
+                        epoch + 1, config['training']['epochs'],
+                        train_loss, train_acc, val_acc,
+                        optimizer.param_groups[0]['lr'],
+                        epoch_time)
+                )
 
     tracker.finish("completed")
 
@@ -311,6 +315,16 @@ def _load_data(config: dict) -> tuple[DataLoader, DataLoader, list[str]]:
 
             root = Path(dataset_path) if dataset_path else Path(".cvlab/data")
             root.mkdir(parents=True, exist_ok=True)
+
+            # 数据集下载提示（首次运行时数据集可能较大）
+            dataset_size_hint = {
+                "CIFAR10": "170MB", "CIFAR100": "170MB",
+                "MNIST": "11MB", "FashionMNIST": "30MB",
+                "ImageNet": ">150GB (需自行下载)",
+            }
+            hint = dataset_size_hint.get(dataset_name, "")
+            if hint:
+                info(_("下载数据集 {} ({}), 首次运行请稍候...").format(dataset_name, hint))
 
             full_train = ds_cls(root=str(root), train=True, download=True, transform=train_transform)
             full_val = ds_cls(root=str(root), train=False, download=True, transform=val_transform)

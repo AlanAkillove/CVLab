@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cvlab"
-version = "0.2.4"
+version = "0.2.5"
 description = "CVLab - CV Experiment Management Platform"
 requires-python = ">=3.10"
 license = {text = "MIT"}
@@ -106,7 +106,8 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "cvlab/tests/*.py" = ["T20", "ARG", "B011", "RUF005", "RUF043", "SIM108", "SIM105", "F841", "E741", "B007", "RUF012", "F401", "F821"]
 "cvlab/cli/console.py" = ["T20"]
-"cvlab/cli/compare.py" = ["E402", "F823"]  # _() import is module-level; F823 is false positive
+"cvlab/cli/compare.py" = ["E402", "F823"]
+"cvlab/cli/help_.py" = ["F401"]  # rich imports used in _show_grouped_help
 
 [tool.ruff.format]
 quote-style = "double"
@@ -147,6 +148,7 @@ source = ["cvlab"]
 omit = ["cvlab/tests/*"]
 
 [tool.coverage.report]
+fail_under = 70
 exclude_lines = [
     "pragma: no cover",
     "if __name__ == .__main__.:",

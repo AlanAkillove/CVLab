@@ -17,6 +17,10 @@ def main(argv: list[str] | None = None) -> int:
         "--lang", choices=["zh", "en"], default=None,
         help="Display language (zh/en)",
     )
+    parser.add_argument(
+        "--verbose", action="store_true",
+        help="Show detailed logs and tracebacks",
+    )
 
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -83,12 +87,63 @@ def main(argv: list[str] | None = None) -> int:
 def _cmd_init(args: argparse.Namespace) -> int:
     from pathlib import Path
 
-    from cvlab.cli.console import result
+    from cvlab.cli.console import console
+    from cvlab.i18n import _
 
     cvlab_dir = Path(".cvlab")
     cvlab_dir.mkdir(exist_ok=True)
-    result("Initialization complete", str(cvlab_dir.resolve()))
+
+    # 生成默认配置模板
+    config_path = cvlab_dir / "config.yaml"
+    _generate_config_template(config_path)
+
+    # 欢迎面板
+    console.print()
+    console.print("[bold cyan]" + "=" * 50 + "[/bold cyan]")
+    console.print(_("[bold]  CVLab {} 初始化成功![/bold]").format("v0.2.5"))
+    console.print("[bold cyan]" + "=" * 50 + "[/bold cyan]")
+    console.print()
+    console.print(_("  \u2713 数据目录: {}").format(str(cvlab_dir.resolve())))
+    console.print(_("  \u2713 配置模板: {}").format(str(config_path.resolve())))
+    console.print()
+    console.print(_("  [bold]接下来你可以:[/bold]"))
+    console.print(_("    1. 编辑配置:  {}").format("edit .cvlab/config.yaml"))
+    console.print(_("    2. 启动训练:  {}").format("cvlab train --config .cvlab/config.yaml"))
+    console.print(_("    3. 查看实验:  {}").format("cvlab list"))
+    console.print(_("    4. Web 界面:  {}").format("cvlab ui"))
+    console.print()
+    console.print(_("  [dim]更多: cvlab help | 完整文档: README.md[/dim]"))
+    console.print()
     return 0
+
+
+def _generate_config_template(path: Path) -> None:
+    """生成默认最小可用的训练配置模板。"""
+    template = """# CVLab 训练配置
+# 完整配置示例见 examples/cifar10_full.yaml
+
+model:
+  name: resnet18            # torchvision 分类模型名
+  pretrained: false
+
+training:
+  epochs: 10                # 训练轮数（设为 null 自动探测）
+  batch_size: null          # null = 自动探测最大 batch size
+  optimizer: adam           # sgd | adam | adamw
+  lr: 0.001                 # 学习率
+  scheduler: cosine         # cosine | step | plateau | none
+
+data:
+  dataset_name: CIFAR10     # torchvision 内置数据集
+  input_size: [3, 32, 32]   # [C, H, W]
+  num_workers: 2
+  val_split: 0.1
+
+seed: 42
+"""
+    # 只在文件不存在时创建，避免覆盖用户修改
+    if not path.exists():
+        path.write_text(template, encoding="utf-8")
 
 
 def _cmd_list(args: argparse.Namespace) -> int:

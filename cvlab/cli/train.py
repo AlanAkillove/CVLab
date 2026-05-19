@@ -31,9 +31,10 @@ def cmd_train(args: argparse.Namespace) -> int:
             result(_("完成"), _("实验: {}").format(exp_id))
             return 0
         except Exception as e:
+            if hasattr(args, "verbose") and args.verbose:
+                import traceback
+                console.print(traceback.format_exc())
             error(_("训练失败: {}").format(e))
-            import traceback
-            console.print(traceback.format_exc())
             return 1
 
     return _run_training_subprocess(args, config_path)

@@ -26,6 +26,8 @@ def cmd_compare(args: argparse.Namespace) -> int:
 
     if len(args.experiments) < 2:
         console.print(f"  [red][FAIL][/red] {_('至少选择 2 个实验')}")
+        console.print(_("  [dim]用法: cvlab compare <exp_id> <exp_id> [exp_id ...][/dim]"))
+        console.print(_("  [dim]示例: cvlab compare exp_001 exp_002[/dim]"))
         return 1
 
     # 验证所有实验存在
