@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import math
 import os
 from collections import Counter
 from dataclasses import dataclass, field
@@ -31,6 +32,9 @@ class DatasetReport:
     has_annotation: bool = False
     annotation_format: str = ""
     warnings: list[str] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
+    class_imbalance_ratio: float | None = None
+    suggested_class_weights: dict[str, float] = field(default_factory=dict)
 
 
 class DatasetAnalyzer:
@@ -55,9 +59,63 @@ class DatasetAnalyzer:
         if self._detect_yolo(report):
             return report
         if self._detect_imagefolder(report):
+            self._calc_class_balance(report)
             return report
         self._detect_flat(report)
         return report
+
+    @staticmethod
+    def class_balance_score(distribution: dict[str, int]) -> float:
+        """计算类别平衡度评分 (1.0 = 完全平衡, 越低越不平衡)。"""
+        if not distribution:
+            return 0.0
+        counts = list(distribution.values())
+        n = len(counts)
+        if n <= 1:
+            return 1.0
+        # 使用归一化熵
+        total = sum(counts)
+        if total == 0:
+            return 0.0
+        proportions = [c / total for c in counts]
+        entropy = -sum(p * math.log2(p) for p in proportions if p > 0)
+        max_entropy = math.log2(n)
+        score = entropy / max_entropy if max_entropy > 0 else 0.0
+        return min(max(round(score, 2), 0.0), 1.0)
+
+    def _calc_class_balance(self, report: DatasetReport) -> None:
+        """计算类别平衡并生成建议。"""
+        dist = report.class_distribution
+        if not dist:
+            return
+        counts = list(dist.values())
+        max_count = max(counts)
+        min_count = min(counts)
+        report.class_imbalance_ratio = max_count / min_count if min_count > 0 else float("inf")
+
+        if report.class_imbalance_ratio > 3:
+            report.suggestions.append(
+                f"类别严重不平衡 (max/min = {report.class_imbalance_ratio:.1f}x). 建议: (1) 使用 WeightedRandomSampler "
+                "进行过采样; (2) 对样本少的类别使用更强数据增强; "
+                "(3) 在 Loss 中加 class_weight."
+            )
+            # 自动计算 class_weight
+            n_classes = len(dist)
+            total = sum(counts)
+            for cls, cnt in dist.items():
+                report.suggested_class_weights[cls] = round(total / (n_classes * cnt), 2)
+        elif report.class_imbalance_ratio > 1.5:
+            report.suggestions.append(
+                f"类别轻度不平衡 ({report.class_imbalance_ratio:.1f}x). 建议关注少样本类别的 Recall."
+            )
+
+        if len(dist) <= 3:
+            low_classes = [c for c, n in dist.items() if n < max_count * 0.3]
+            if low_classes:
+                report.suggestions.append(
+                    "{} 样本过少 (不足最多类的 30%). 建议增加该类数据或使用更强的增强策略."
+                    .format(", ".join(low_classes))
+                )
 
     def _detect_cifar(self, report: DatasetReport) -> bool:
         """检测 CIFAR-10/100 batch 格式。"""

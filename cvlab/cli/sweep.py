@@ -126,7 +126,6 @@ def _cmd_top(args: argparse.Namespace) -> int:
     t.add_column(args.metric, justify="right")
     t.add_column(_("状态"))
 
-    maximize = "acc" in args.metric or "f1" in args.metric
     for i, tr in enumerate(top):
         val = tr["metric_value"]
         val_str = f"{val:.4f}"

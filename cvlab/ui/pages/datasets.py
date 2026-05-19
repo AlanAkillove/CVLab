@@ -26,7 +26,7 @@ def show_datasets():
 
     db = Database()
 
-    tab1, tab2 = st.tabs([_("数据集"), _("注册数据集")])
+    tab1, tab2, tab3 = st.tabs([_("数据集"), _("注册数据集"), _("增强预览")])
 
     # ── Tab 2: Register new dataset ───────────────────────
     with tab2:
@@ -102,6 +102,139 @@ def show_datasets():
         # Dataset list
         for ds in datasets:
             _render_dataset_card(db, ds)
+
+    # ── Tab 3: Augmentation preview ───────────────────────
+    with tab3:
+        section_header(_("数据增强预览"))
+
+        import numpy as np
+        import torchvision.transforms as T
+        from PIL import Image as PILImage
+
+
+        col1, col2 = st.columns([1, 1])
+
+        image_tensor = None
+        source_image_path = None
+
+        with col1:
+            st.markdown(f'<div style="font-size:0.85rem;font-weight:500;'
+                        f'margin-bottom:0.5rem;">{_("图片来源")}</div>',
+                        unsafe_allow_html=True)
+
+            # Option 1: Upload
+            uploaded = st.file_uploader(
+                _("上传图片"), type=["jpg", "jpeg", "png", "bmp"],
+                label_visibility="collapsed",
+            )
+            if uploaded:
+                pil_img = PILImage.open(uploaded).convert("RGB")
+                image_tensor = T.ToTensor()(pil_img)
+
+            # Option 2: pick from registered datasets
+            if image_tensor is None:
+                registered = [d for d in datasets if Path(d["path"]).is_dir()]
+                if registered:
+                    ds_names = [d["name"] for d in registered]
+                    sel_name = st.selectbox(_("从已有数据集选取"), ["", *ds_names],
+                                            key="aug_ds_select")
+                    if sel_name:
+                        ds = next(d for d in registered if d["name"] == sel_name)
+                        ds_path = Path(ds["path"])
+                        # Find first image
+                        exts = {"*.jpg", "*.jpeg", "*.png", "*.bmp"}
+                        found = []
+                        for e in exts:
+                            found.extend(list(ds_path.rglob(e))[:1])
+                        if found:
+                            source_image_path = found[0]
+                            pil_img = PILImage.open(source_image_path).convert("RGB")
+                            image_tensor = T.ToTensor()(pil_img)
+
+            # Still no image? Use a blank canvas
+            if image_tensor is None:
+                blank = PILImage.new("RGB", (224, 224), color=(200, 200, 200))
+                image_tensor = T.ToTensor()(blank)
+
+            # Augmentation params
+            st.markdown(f'<div style="font-size:0.85rem;font-weight:500;'
+                        f'margin-top:1rem;margin-bottom:0.5rem;">{_("增强参数")}</div>',
+                        unsafe_allow_html=True)
+
+            hflip = st.checkbox("RandomHorizontalFlip", value=True, key="aug_hflip")
+            vflip = st.checkbox("RandomVerticalFlip", value=False, key="aug_vflip")
+            brightness = st.slider(_("亮度"), 0.0, 2.0, 1.2, 0.1, key="aug_bright")
+            contrast = st.slider(_("对比度"), 0.0, 2.0, 1.0, 0.1, key="aug_contrast")
+            saturation = st.slider(_("饱和度"), 0.0, 2.0, 1.0, 0.1, key="aug_sat")
+            rotation = st.slider(_("旋转角度"), 0, 90, 15, 5, key="aug_rot")
+            blur_kernel = st.selectbox(_("高斯模糊"), [0, 3, 5, 7], index=0, key="aug_blur")
+
+            num_variants = st.slider(_("生成变体数"), 1, 6, 3, key="aug_n")
+
+            regen = st.button(_("刷新预览"), type="primary", use_container_width=True)
+
+        with col2:
+            if regen or "aug_last_input" not in st.session_state:
+                st.session_state["aug_last_input"] = image_tensor.clone()
+
+            show_img = st.session_state["aug_last_input"]
+            used_pil = T.ToPILImage()(show_img)
+
+            # Build transforms
+            aug_transforms = []
+            if hflip:
+                aug_transforms.append(T.RandomHorizontalFlip(p=1.0))
+            if vflip:
+                aug_transforms.append(T.RandomVerticalFlip(p=1.0))
+            aug_transforms.extend([
+                T.ColorJitter(brightness=brightness, contrast=contrast,
+                              saturation=saturation, hue=0),
+                T.RandomRotation(degrees=rotation),
+            ])
+            if blur_kernel > 0:
+                aug_transforms.append(T.GaussianBlur(kernel_size=blur_kernel))
+
+            composed = T.Compose(aug_transforms)
+
+            st.markdown(
+                f'<div style="font-size:0.85rem;font-weight:500;margin-bottom:0.5rem;">'
+                f'{_("预览")}</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Show original
+            st.markdown(
+                f'<div style="font-size:0.75rem;color:var(--text-secondary);'
+                f'margin-bottom:0.25rem;">{_("原图")}</div>',
+                unsafe_allow_html=True,
+            )
+            st.image(np.array(used_pil), width=200)
+
+            st.markdown(
+                f'<div style="font-size:0.75rem;color:var(--text-secondary);'
+                f'margin-top:0.75rem;margin-bottom:0.25rem;">{_("增强后")} ({num_variants} {_("变体")})</div>',
+                unsafe_allow_html=True,
+            )
+
+            # Generate variants
+            variant_cols = st.columns(min(num_variants, 3))
+            for vi in range(num_variants):
+                aug_img = composed(used_pil)
+                with variant_cols[vi % len(variant_cols)]:
+                    st.image(np.array(aug_img), width=180)
+
+            # Show current transform sequence as code
+            with st.expander(_("当前增强配置 (YAML)")):
+                yaml_lines = ["transform_pipeline:"]
+                if hflip:
+                    yaml_lines.append("  - RandomHorizontalFlip:")
+                if vflip:
+                    yaml_lines.append("  - RandomVerticalFlip:")
+                yaml_lines.append(f"  - ColorJitter: {{brightness: {brightness}, contrast: {contrast}, saturation: {saturation}}}")
+                yaml_lines.append(f"  - RandomRotation: {{degrees: {rotation}}}")
+                if blur_kernel > 0:
+                    yaml_lines.append(f"  - GaussianBlur: {{kernel_size: {blur_kernel}}}")
+                st.code("\n".join(yaml_lines), language="yaml")
 
     sidebar_footer()
 

@@ -152,14 +152,56 @@ def show_experiment_detail():
     # ── Training Metrics ─────────────────────────────────
     metrics = db.get_metrics(selected_id)
     if metrics:
-        section_header(_("训练指标"))
         df = db.get_metrics_dataframe(selected_id)
         if df is not None and not df.empty:
-            from cvlab.ui.components.charts import plot_single_metric
-            cols = st.columns(2)
-            for i, col_name in enumerate(df.columns):
-                with cols[i % 2]:
-                    plot_single_metric(df, col_name)
+            section_header(_("训练指标"))
+
+            # ── 切换模式 ──────────────────────────────────
+            view_mode = st.radio(
+                _("视图模式"),
+                [_("独立曲线"), _("Loss + LR 叠加")],
+                horizontal=True,
+                label_visibility="collapsed",
+            )
+
+            if view_mode == _("Loss + LR 叠加"):
+                from cvlab.ui.components.charts import (
+                    detect_plateau,
+                    plot_lr_loss_overlay,
+                )
+                # 选择 Loss 列
+                loss_candidates = [c for c in df.columns if "loss" in c.lower()]
+                loss_col = loss_candidates[0] if loss_candidates else "train/loss"
+
+                plot_lr_loss_overlay(df, loss_col=loss_col)
+
+                # 平台期检测
+                plateaus = detect_plateau(df, loss_col, window=5, threshold=0.005)
+                if plateaus:
+                    for p in plateaus:
+                        st.markdown(
+                            '<div style="font-size:0.85rem;color:var(--text-secondary);'
+                            'padding:0.25rem 0;">'
+                            '<span style="color:#E65100;">\u25b6</span> ' +
+                            _("{}-{} 检测到平台期 (变化 {:.2f}%)").format(
+                                p["start"], p["end"], p["relative_change"] * 100
+                            )
+                            + '</div>',
+                            unsafe_allow_html=True,
+                        )
+                    st.markdown(
+                        f'<div style="font-size:0.85rem;color:var(--text-tertiary);'
+                        f'padding:0.25rem 0 0.5rem 0;">'
+                        f'{_("建议: 可考虑降低学习率或使用 early stop")}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+            else:
+                from cvlab.ui.components.charts import plot_single_metric
+                cols = st.columns(2)
+                for i, col_name in enumerate(df.columns):
+                    with cols[i % 2]:
+                        plot_single_metric(df, col_name)
 
     divider()
 
@@ -189,10 +231,8 @@ def show_experiment_detail():
                 mime="text/csv",
                 key=f"dl_ckpt_{selected_id}",
             )
-        with col_csv2:
-            # 显示 CSV 预览供复制
-            with st.expander(_("CSV 预览 (可复制)")):
-                st.code(csv, language="csv")
+        with col_csv2, st.expander(_("CSV 预览 (可复制)")):
+            st.code(csv, language="csv")
 
     divider()
 
@@ -208,6 +248,51 @@ def show_experiment_detail():
                         st.image(art["file_path"], width='stretch')
                     except Exception:
                         st.caption("(image unavailable)")
+
+    # ── Prediction Timeline ────────────────────────────
+    artifacts = db.get_artifacts(selected_id)
+    pred_artifacts = [a for a in artifacts if a.get("key", "").startswith("prediction")]
+    if pred_artifacts:
+        divider()
+        section_header(_("预测时间轴"), badge=str(len(pred_artifacts)))
+
+        # Group by epoch/step
+        epoch_artifacts: dict[int, list] = {}
+        for a in pred_artifacts:
+            step = a.get("step", 0)
+            epoch_artifacts.setdefault(step, []).append(a)
+
+        epochs = sorted(epoch_artifacts.keys())
+        if len(epochs) > 1:
+            selected_epoch = st.select_slider(
+                _("选择 Epoch"),
+                options=epochs,
+                value=epochs[-1],
+                format_func=lambda x: f"Epoch {x}",
+                key=f"timeline_{selected_id}",
+            )
+        else:
+            selected_epoch = epochs[0]
+            st.markdown(
+                f'<div style="font-size:0.85rem;color:var(--text-secondary);'
+                f'margin-bottom:0.5rem;">{_("Epoch {}").format(selected_epoch)}</div>',
+                unsafe_allow_html=True,
+            )
+
+        artifacts_at_epoch = epoch_artifacts.get(selected_epoch, [])
+        if artifacts_at_epoch:
+            cols = st.columns(4)
+            for i, art in enumerate(artifacts_at_epoch):
+                with cols[i % 4]:
+                    if art.get("file_path"):
+                        try:
+                            st.image(art["file_path"], width='stretch')
+                        except Exception:
+                            st.caption("(unavailable)")
+                    caption = art.get("key", "")
+                    if len(caption) > 30:
+                        caption = caption[:27] + "..."
+                    st.caption(caption)
 
     # ── Reproduction ─────────────────────────────────────
     exp_command = exp.get("command") or ""

@@ -121,8 +121,10 @@ def _cmd_init(args: argparse.Namespace) -> int:
     return 0
 
 
-def _generate_config_template(path: Path) -> None:
-    """生成默认最小可用的训练配置模板。"""
+def _generate_config_template(path) -> None:
+    """生成默认最小可用的训练配置模板。
+    path: config 文件路径。
+    """
     template = """# CVLab 训练配置
 # 完整配置示例见 examples/cifar10_full.yaml
 

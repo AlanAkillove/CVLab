@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.2.6 (2026-05-19) — Data Quality & UI Visualization
+
+### New CLI Commands
+- **`cvlab estimate --config`**: Pre-train time estimation (runs 5 batches, measures throughput per batch/epoch/memory)
+- **`cvlab list --json` / `--csv`**: Pipeable experiment list output (id, name, status, model, created_at, seed)
+- **`cvlab sweep top <sweep_id>`**: Top N trial ranking by metric
+
+### Data Quality Enhancement
+- Class balance analysis with entropy-based score (`class_balance_score`)
+- Automatic imbalance warnings and suggested class weights
+- Actionable suggestions for data augmentation strategies
+
+### UI: LR-Loss Dual-Axis Overlay
+- Experiment detail page: toggle between independent curves and Loss+LR overlay
+- Plateau detection with epoch range and relative change percentage
+- LR decay events auto-annotated with vertical lines
+
+### UI: Data Augmentation Interactive Preview
+- New "Augmentation Preview" tab in Datasets page
+- Upload image or pick from registered datasets
+- Real-time sliders for brightness, contrast, saturation, rotation, blur
+- Generate multiple variants with current pipeline
+- Export current config as YAML
+
+### UI: Prediction Timeline
+- Epoch slider for prediction artifacts (if `log_images: true` during training)
+- Grid view of prediction images at selected epoch
+
+### Bug Fixes
+- Fixed `width='stretch'` keyword argument duplication in datasets.py, compare.py, experiment_detail.py
+- Fixed `.gitignore` excluding `cvlab/data/` Python module (changed `/data/` prefix)
+
+---
+
 ## 0.2.5 (2026-05-19) — UX Overhaul (32 audit fixes)
 
 ### UX Improvements (CLI)

@@ -62,6 +62,20 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
         result(_("最大"), f"{report.max_dimensions[0]}x{report.max_dimensions[1]}")
         result(_("平均"), f"{report.avg_dimensions[0]:.0f}x{report.avg_dimensions[1]:.0f}")
 
+    if report.suggestions:
+        header(_("建议"))
+        for s in report.suggestions:
+            console.print(f"  [cyan][i][/cyan] {s}")
+
+    if report.suggested_class_weights and report.format_detected not in ("CIFAR-10", "CIFAR-100"):
+        header(_("建议的 Class Weights (基于类别数量)"))
+        code = "class_weights = {"
+        parts = []
+        for cls, w in sorted(report.suggested_class_weights.items()):
+            parts.append(f'    "{cls}": {w}')
+        code += "\n" + ",\n".join(parts) + "\n}"
+        console.print(f"  {code}")
+
     if report.warnings:
         for w in report.warnings:
             console.print(f"  [yellow][WARN][/yellow] {w}")

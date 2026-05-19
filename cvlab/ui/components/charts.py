@@ -165,6 +165,88 @@ def plot_confusion_matrix(
     st.plotly_chart(fig, width='stretch')
 
 
+def plot_lr_loss_overlay(
+    df: pd.DataFrame,
+    loss_col: str = "train/loss",
+    lr_col: str = "lr",
+    title: str = "Loss & Learning Rate",
+) -> None:
+    """Plot Loss and LR on dual Y-axes."""
+    if loss_col not in df.columns or lr_col not in df.columns:
+        missing = [c for c in [loss_col, lr_col] if c not in df.columns]
+        st.info(f"{_('无')} {', '.join(missing)} {_('数据')}")
+        return
+
+    from plotly.subplots import make_subplots
+
+    fig = make_subplots(specs=[[{"secondary_y": True}]])
+
+    fig.add_trace(
+        go.Scatter(
+            y=df[loss_col],
+            name=loss_col,
+            mode="lines",
+            line=dict(width=1.5, color="#E4002B"),
+        ),
+        secondary_y=False,
+    )
+    fig.add_trace(
+        go.Scatter(
+            y=df[lr_col],
+            name=lr_col,
+            mode="lines",
+            line=dict(width=1.5, color="#002FA7", dash="dot"),
+        ),
+        secondary_y=True,
+    )
+
+    fig.update_layout(
+        title=dict(text=title),
+        hovermode="x unified",
+        template="swiss",
+    )
+    fig.update_xaxes(title_text="Step")
+    fig.update_yaxes(title_text=loss_col, secondary_y=False)
+    fig.update_yaxes(title_text=lr_col, secondary_y=True, showgrid=False)
+
+    # Detect LR decay events
+    lr_series = df[lr_col].dropna()
+    if len(lr_series) > 2:
+        lr_drops = []
+        for i in range(1, len(lr_series)):
+            ratio = lr_series.iloc[i] / lr_series.iloc[i - 1]
+            if ratio < 0.9:
+                epoch = lr_series.index[i]
+                lr_drops.append(epoch)
+                fig.add_vline(x=epoch, line_dash="dash", line_color="#6B6B73", opacity=0.3)
+
+    st.plotly_chart(fig, width='stretch')
+
+
+# ── Plateau detection ─────────────────────────────────────
+
+
+def detect_plateau(df: pd.DataFrame, col: str, window: int = 5,
+                   threshold: float = 0.005) -> list[dict]:
+    """检测指标平台期。"""
+    if col not in df.columns or len(df) < window * 2:
+        return []
+    series = df[col].dropna()
+    events = []
+    for i in range(len(series) - window):
+        segment = series.iloc[i:i + window]
+        relative_change = abs(segment.iloc[-1] - segment.iloc[0]) / (abs(segment.iloc[0]) + 1e-8)
+        if relative_change < threshold:
+            start_epoch = series.index[i]
+            end_epoch = series.index[i + window - 1]
+            events.append({
+                "start": start_epoch,
+                "end": end_epoch,
+                "relative_change": relative_change,
+            })
+    return events
+
+
 def plot_trial_comparison(
     trial_values: list[dict[str, Any]],
     metric_key: str,
