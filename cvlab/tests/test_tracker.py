@@ -31,7 +31,7 @@ def cvlab_dir(tmp_path):
 class TestTracker:
     def test_create_experiment(self, cvlab_dir):
         tracker = Tracker(config={"name": "test_exp"}, cvlab_dir=cvlab_dir)
-        assert tracker.experiment_id.startswith("exp_")
+        assert tracker.experiment_id.startswith("test-exp") or tracker.experiment_id.startswith("exp_")
         assert tracker.exp_dir.exists()
         assert (tracker.exp_dir / "config.yaml").exists()
         assert tracker.config is not None

@@ -48,13 +48,38 @@ class Database:
 
     def create_experiment(self, name: str, config: dict, seed: int | None = None,
                           env_json: str = "{}") -> str:
+        import hashlib
         import random
         from datetime import datetime
 
-        ts = datetime.now().strftime('%y%m%d_%H%M%S')
-        ms = datetime.now().strftime('%f')[:3]
-        suffix = f"{random.randint(1000, 9999)}"
-        exp_id = f"exp_{ts}_{ms}_{suffix}"
+        # 生成短 ID: {slug}_{MMDD}_{4char_hash}
+        # 例如: resnet18-cifar10_0520_a3f2
+        # 保留排序性（日期前缀）、语义（模型/数据集名）、唯一性（短 hash）
+        from cvlab.core.utils import slugify
+
+        # 从 config 中提取模型名和数据集名作为 ID 前缀
+        model_name = config.get("model", {}).get("name", "") if isinstance(config, dict) else ""
+        dataset_name = ""
+        if isinstance(config, dict):
+            dataset_name = config.get("data", {}).get("dataset_name", "") or ""
+
+        # 构建语义前缀
+        if name:
+            semantic = name
+        elif model_name:
+            semantic = model_name
+            if dataset_name:
+                semantic = f"{model_name}_{dataset_name}"
+        else:
+            semantic = "exp"
+
+        slug = slugify(semantic, max_len=24)
+        date_part = datetime.now().strftime('%m%d')
+        short_hash = hashlib.md5(
+            f"{datetime.now().isoformat()}_{random.random()}".encode()
+        ).hexdigest()[:4]
+
+        exp_id = f"{slug}_{date_part}_{short_hash}"
         now = self._now()
         self._conn.execute(
             """INSERT INTO experiments (id, name, status, created_at, updated_at,

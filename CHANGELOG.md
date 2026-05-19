@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.4 (2026-05-19) — Readable Experiment IDs
+
+### UX Improvement
+- **Redesigned experiment ID format**: `{semantic-slug}_{MMDD}_{4char-hash}`
+  - Old: `exp_250519_123456_789_1234` (27 chars, no semantics)
+  - New: `resnet18-cifar10_0519_a3f2` or `my-experiment_0519_x7k9` (readable at a glance)
+  - Falls back: `name → model_dataset → exp`
+- `cvlab list` now shows model name column
+- `cvlab show` header now displays experiment name prominently
+
+### Bug Fixes
+- Fixed test_tracker.py assertion for new ID format
+
 ## 0.2.3 (2026-05-19) — Feature Growth
 
 ### New Features

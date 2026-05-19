@@ -92,6 +92,8 @@ def _cmd_init(args: argparse.Namespace) -> int:
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
+    import json
+
     from cvlab.cli.console import header, info, result, table
     from cvlab.db.database import Database
     from cvlab.i18n import _
@@ -104,9 +106,21 @@ def _cmd_list(args: argparse.Namespace) -> int:
         return 0
 
     header(_("实验列表"))
-    rows = [[e["id"][:20], e["name"][:20], e["status"], e["created_at"][:19]]
-            for e in exps]
-    table("", [_("ID"), _("名称"), _("状态"), _("创建时间")], rows)
+    rows = []
+    for e in exps:
+        cfg = {}
+        from contextlib import suppress
+        with suppress(json.JSONDecodeError, TypeError):
+            cfg = json.loads(e.get("config_json", "{}")) if isinstance(e.get("config_json"), str) else e.get("config_json", {})
+        model = cfg.get("model", {}).get("name", "")[:12] if isinstance(cfg, dict) else ""
+        rows.append([
+            e["id"][:28],
+            e["name"][:20],
+            model,
+            e["status"],
+            e["created_at"][:16] if e.get("created_at") else "",
+        ])
+    table("", [_("ID"), _("名称"), _("模型"), _("状态"), _("创建时间")], rows)
     result(_("总计"), f"{len(exps)} {_('实验')}")
     return 0
 
@@ -124,8 +138,8 @@ def _cmd_show(args: argparse.Namespace) -> int:
         console.print(f"  [red][FAIL][/red] {_('实验 {} 不存在').format(args.experiment_id)}")
         return 1
 
-    header(f"{_('实验')} {args.experiment_id}")
-    result(_("名称"), exp["name"])
+    header(f"{exp.get('name', '?')[:40]}")
+    result(_("实验 ID"), args.experiment_id)
     result(_("状态"), exp["status"])
     result(_("创建时间"), exp["created_at"])
     result("Seed", str(exp.get("seed", "N/A")))

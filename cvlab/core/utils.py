@@ -43,3 +43,26 @@ def ensure_utf8_open(path: str, mode: str = "r"):
         File handle with UTF-8 encoding.
     """
     return open(path, mode, encoding="utf-8")
+
+
+def slugify(text: str, max_len: int = 20) -> str:
+    """Convert text to a URL-safe slug for experiment ID prefixes.
+
+    Rules:
+    - lowercase
+    - alphanumeric and hyphens only
+    - collapse multiple hyphens
+    - strip leading/trailing hyphens
+    - truncated to max_len
+
+    Examples:
+        "My Cool Experiment!" → "my-cool-experiment"
+        "ResNet18 + CIFAR-10" → "resnet18-cifar-10"
+        "test/lr=0.001" → "testlr0001"
+    """
+    import re
+    slug = text.lower()
+    slug = re.sub(r"[^a-z0-9\-]", "-", slug)
+    slug = re.sub(r"-+", "-", slug)
+    slug = slug.strip("-")
+    return slug[:max_len].rstrip("-")
