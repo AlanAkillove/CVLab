@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.2.2 (2026-05-19) — Third-Party Library Usability
+
+### New Feature
+- **`cvlab ui` command** — launch Streamlit Web UI with auto-resolved path
+  ```bash
+  cvlab ui                    # default port 8501
+  cvlab ui --port 8502 --lang en
+  cvlab ui --host 0.0.0.0     # LAN access
+  ```
+  Users no longer need to locate `app.py` manually. Three fallback resolution strategies:
+  development path → `importlib.resources` → `__file__` inspection
+
+### Documentation
+- Added third-party library usage guide to README/README_EN
+- `cvlab ui` documented in command reference tables
+- Web UI sections updated to show `cvlab ui` command instead of `streamlit run`
+- USAGE.md: added `cvlab ui` command reference + FAQ entry
+- All CLI invocation examples now show the `cvlab` command (not `python -m`)
+
 ## 0.2.1 (2026-05-19) — Expert Review Fixes
 
 ### New Feature
