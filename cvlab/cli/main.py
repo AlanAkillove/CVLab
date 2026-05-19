@@ -27,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     from cvlab.cli.compare import add_subparser as add_compare
     from cvlab.cli.data import add_subparser as add_data
     from cvlab.cli.diagnose import add_subparser as add_diagnose
+    from cvlab.cli.estimate import add_subparser as add_estimate
     from cvlab.cli.export import add_subparser as add_export
     from cvlab.cli.help_ import add_subparser as add_help
     from cvlab.cli.note import add_subparser as add_note
@@ -46,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
     add_diagnose(sub)
     add_data(sub)
     add_export(sub)
+    add_estimate(sub)
     add_tag(sub)
     add_note(sub)
     add_help(sub)
