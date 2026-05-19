@@ -26,9 +26,11 @@ def main(argv: list[str] | None = None) -> int:
     from cvlab.cli.weights import add_subparser as add_weights
     from cvlab.cli.diagnose import add_subparser as add_diagnose
     from cvlab.cli.data import add_subparser as add_data
+    from cvlab.cli.compare import add_subparser as add_compare
     from cvlab.cli.help_ import add_subparser as add_help
 
     add_train(sub)
+    add_compare(sub)
     add_sweep(sub)
     add_profile(sub)
     add_weights(sub)

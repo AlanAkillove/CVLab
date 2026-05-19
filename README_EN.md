@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.2.0-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.2.1-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/pytorch-2.0%2B-orange.svg?style=flat-square" alt="PyTorch">
   <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
@@ -24,8 +24,7 @@
 - [Quick Start](#quick-start)
 - [Usage Examples](#usage-examples)
 - [Command Reference](#command-reference)
-- [Project Structure](#project-structure)
-- [Design Principles](#design-principles)
+- [Learn More](#learn-more)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -33,7 +32,7 @@
 
 ## Introduction
 
-CVLab is a lightweight, CV-specialized training experiment management tool. It doesn't require model inheritance changes, doesn't bind to a framework, and doesn't deploy services. One `pip install`, three lines of code, and you get experiment tracking, gradient monitoring, data analysis, and hyperparameter sweep capabilities.
+CVLab is a lightweight, CV-specialized training experiment management tool. One `pip install`, three lines of code, and you get experiment tracking, gradient monitoring, diagnostics, and hyperparameter sweep capabilities.
 
 **Language Support**: [中文](README.md) | English (default)
 
@@ -41,93 +40,19 @@ CVLab is a lightweight, CV-specialized training experiment management tool. It d
 
 ## Key Features
 
-<details open>
-<summary><b>📊 Experiment Tracking</b></summary>
+- **📊 Experiment Tracking** — Auto-log metrics, images, confusion matrices, detection boxes, and segmentation masks. SQLite persistence, zero service dependencies. One-click reproduction.
+- **🔌 Non-intrusive Gradient Monitoring** — Sampling mode via PyTorch `register_full_backward_hook`. No model code changes needed. Automatic vanishing/exploding gradient alerts.
+- **🖥️ Environment Probe + Acceleration Diagnostics** — Auto-detect GPU / CUDA / storage type, recommend 6 acceleration options (AMP, BF16, torch.compile, etc.).
+- **🎯 Batch Size Auto-Detection** — Binary search with 20% safety margin. Includes OOM auto-recovery (reduce by 20% each attempt, up to 2 retries).
+- **🔍 Training Diagnostics Suite** — I/O bottleneck detection, loss anomaly analysis, model performance profiling (FLOPs/params/latency), hyperparameter importance analysis.
 
-- Automatic experiment ID generation, deterministic seeding, environment snapshots, and script copies
-- Scalar metric logging with SQLite persistence (WAL mode, zero dependencies)
-- Image, confusion matrix, detection box, and segmentation mask visualization
-- Checkpoint management (auto-rotation, EMA weights, best/last tagging)
-- One-click reproduction command generation
+> Full feature list in [USAGE.md](USAGE.md) (dataset analysis, hyperparameter sweep, HTML reports, visual UI, etc.).
 
-</details>
+---
 
-<details>
-<summary><b>🔌 Non-intrusive Hook Injection</b></summary>
+## Screenshots
 
-- Gradient monitoring via `register_full_backward_hook` (sampling mode)
-- Vanishing/exploding gradient alerts (thresholds: vanish < 1e-5, explosion > 10)
-- Layer-specific monitoring and activation value sampling
-- Zero model code modifications required
-
-</details>
-
-<details>
-<summary><b>🖥️ Environment Detection & Acceleration</b></summary>
-
-- Auto-detect OS / Python / PyTorch / CUDA versions
-- GPU model, memory, Compute Capability, TensorCore support
-- WSL2 detection, CUDA version mismatch warnings
-- 6 training acceleration options (AMP FP16, BF16, cuDNN Benchmark, torch.compile, Channels Last, Gradient Checkpointing)
-
-</details>
-
-<details>
-<summary><b>🎯 Batch Size Auto-Detection</b></summary>
-
-- Binary search algorithm with 20% safety margin
-- Pessimistic data injection (max resolution + dense labels)
-- AMP/BF16 aligned probing
-- Multi-GPU aware
-
-</details>
-
-<details>
-<summary><b>🔍 Training Diagnostics</b></summary>
-
-- **I/O Bottleneck Detection**: Analyze DataLoader load time vs compute time, recommend optimal num_workers
-- **Loss Anomaly Detection**: NaN/Inf, explosion, plateau, spike, LR anomalies
-- **Model Performance Profile**: FLOPs, parameter count, forward/backward latency, peak memory
-- **Weight Loading Diagnostics**: missing/unexpected keys, shape checks, dual weight file diff
-
-</details>
-
-<details>
-<summary><b>⚡ Hyperparameter Sweep</b></summary>
-
-- Grid search (Cartesian product enumeration)
-- Random search (choice/uniform/loguniform/int distributions)
-- Trial management + best trial search
-- Random forest hyperparameter importance analysis
-
-</details>
-
-<details>
-<summary><b>📁 Dataset Analysis</b></summary>
-
-- Class distribution, image format statistics, size distribution, class balance scoring
-- Data provenance tracking (two-level: O(1) root directory snapshot + annotation SHA256)
-- Change detection, snapshot listing
-
-</details>
-
-<details>
-<summary><b>🌐 Visual UI</b></summary>
-
-- Streamlit multi-page (experiment list, detail, compare, sweep, environment diagnostics)
-- Plotly interactive metric curve overlay
-- Language switching (中文 / English)
-- Dark mode support
-
-</details>
-
-<details>
-<summary><b>📄 Report Generation</b></summary>
-
-- Self-contained HTML reports (Jinja2 templates)
-- Hyperparameters, environment, metrics, checkpoints, reproduction commands
-
-</details>
+> *Screenshots coming soon — contributions welcome!*
 
 ---
 
@@ -208,6 +133,9 @@ cvlab train --config examples/cifar10.yaml
 # List experiments
 cvlab list
 
+# Compare experiments (new in v0.2.1)
+cvlab compare exp_001 exp_002 --metric val/acc
+
 # Show experiment details
 cvlab show exp_250519_123456_7890
 
@@ -266,6 +194,7 @@ Open `http://localhost:8501` in your browser. Language switching and dark mode t
 | `cvlab train --config <yaml>` | Start training |
 | `cvlab list [--status] [--tag]` | List experiments |
 | `cvlab show <experiment_id>` | Show experiment details |
+| `cvlab compare <exp_1> <exp_2> [...]` | Compare experiments (Rich highlighted table) |
 | `cvlab diagnose loss <exp_id>` | Loss anomaly diagnosis |
 | `cvlab diagnose gradient <exp_id>` | Gradient health diagnosis |
 | `cvlab diagnose dataloader <config>` | DataLoader performance diagnosis |
@@ -280,7 +209,14 @@ Open `http://localhost:8501` in your browser. Language switching and dark mode t
 
 ---
 
-## Project Structure
+## Learn More
+
+- **[USAGE.md](USAGE.md)** — Detailed usage guide with CV-specific Python API examples
+- **[CHANGELOG.md](CHANGELOG.md)** — Version history and release notes
+- **[Project Structure](#project-structure)** — Inside CVLab
+- **[Design Principles](#design-principles)** — Architecture decisions
+
+### Project Structure
 
 ```
 cvlab/
@@ -303,9 +239,7 @@ cvlab/
 └── tests/          # Test suite (150+ tests)
 ```
 
----
-
-## Design Principles
+### Design Principles
 
 | Principle | Description |
 |-----------|-------------|
@@ -315,9 +249,7 @@ cvlab/
 | **CV Specialized** | Built-in detection box / segmentation mask / confusion matrix visualization |
 | **i18n First** | Bilingual from day one |
 
----
-
-## Requirements
+### Requirements
 
 - Python 3.10+
 - PyTorch 2.0+

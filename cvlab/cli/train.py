@@ -63,9 +63,15 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
 
     batch_size = config.get("training", {}).get("batch_size", 64)
     max_retries = 2
+    oom_reduction_factor = 0.8  # 每次 OOM batch size 减小 20%
 
     for attempt in range(max_retries + 1):
-        current_bs = batch_size if attempt == 0 else max(1, batch_size // (2 ** attempt))
+        if attempt == 0:
+            current_bs = batch_size
+        else:
+            # 每次减小 20% 而非减半，避免过度激进
+            from math import ceil
+            current_bs = max(1, ceil(batch_size * (oom_reduction_factor ** attempt)))
 
         if attempt > 0:
             warning(_("OOM 恢复: 第 {} 次重试, batch_size={}").format(attempt, current_bs))
@@ -89,7 +95,7 @@ def _run_training_subprocess(args: argparse.Namespace, config_path: Path) -> int
             result(_("完成"), _("实验: {}").format(exp_id))
             return 0
 
-        # OOM 检测（依赖子进程返回码，worker 已处理 CUDA OOM → 137）
+        # OOM 检测：exit code 137 (CUDA OOM / RuntimeError / system OOM killing)
         is_oom = proc.returncode == 137
         if is_oom and attempt < max_retries and current_bs > 1:
             continue

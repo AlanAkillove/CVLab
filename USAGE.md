@@ -69,7 +69,7 @@ cvlab train --config cifar10.yaml
 - 记录 loss、acc 等指标到 SQLite
 - 监控各层梯度范数
 - 在每个 epoch 结束时保存 Checkpoint
-- 遇到 OOM 时自动减半 Batch Size 重试
+- 遇到 OOM 时自动减小 Batch Size（每次 20%）重试
 
 ### 4. 查看实验
 
@@ -114,6 +114,17 @@ cvlab sweep create --config sweep.yaml
 cvlab sweep analyze sweep_001 --metric val/acc
 ```
 
+### 7. 多实验对比
+
+```bash
+# CLI 对比（终端输出 Rich 高亮表格）
+cvlab compare exp_001 exp_002
+cvlab compare exp_001 exp_002 --metric val/acc
+
+# 或使用 Streamlit UI 交互式对比
+streamlit run cvlab/ui/app.py
+```
+
 ---
 
 ## 命令参考
@@ -140,10 +151,28 @@ cvlab sweep analyze sweep_001 --metric val/acc
 训练以子进程方式运行，主进程负责监控和 OOM 恢复。
 
 **OOM 恢复机制**：
-1. 训练子进程因 CUDA OOM 崩溃时（exit code 137）
-2. 主进程自动将 Batch Size 减半
-3. 最多重试 2 次
+1. 训练子进程检测到 CUDA OOM（通过 `torch.cuda.OutOfMemoryError` 或 `RuntimeError` 中 "CUDA out of memory" 关键词）
+2. 退出码 137 通知主进程
+3. 主进程自动将 Batch Size 减小 20%（乘以 0.8），最多重试 2 次
 4. 若最小 Batch Size (1) 仍 OOM，标记实验为 failed
+
+> **注意**：非 OOM 错误（exit code 1）不会触发重试，直接标记失败。
+
+### `cvlab compare`
+
+多实验指标对比（v0.2.1 新增）。
+
+```
+用法: cvlab compare <exp_id> <exp_id> [<exp_id> ...] [options]
+
+必选:
+  exp_id    实验 ID，至少 2 个
+
+可选:
+  --metric, -m <str>    指定对比的指标（默认显示所有共同指标）
+```
+
+输出 Rich 高亮对比表格，不同配置值以黄色标注，便于快速定位差异。
 
 ### `cvlab list`
 
@@ -207,7 +236,7 @@ dataloader 选项:
 
 子命令:
   analyze <path>          分析数据集统计信息
-  augment <image>         预览数据增强效果
+  augment <image>         预览数据增强效果（CLI 静态输出）
   check <path>            检查数据集血缘状态
   history                 列出数据集快照历史
 
@@ -217,6 +246,8 @@ augment 选项:
 check 选项:
   --hash-annotations      计算标注文件 SHA256 哈希
 ```
+
+> **关于 augment**：CLI 版 `cvlab data augment` 提供静态网格预览（单图多种增强对比）。交互式增强预览（参数滑块实时调整）请使用 Streamlit UI。
 
 **data analyze** 输出：
 - 样本总数、类别数
@@ -253,6 +284,8 @@ check 选项:
 - 理论 FLOPs
 - 推理延迟（前向 / 反向）
 - 峰值显存占用
+
+> **注意**：`cvlab profile` 目前支持 `torchvision.models` 中的分类模型。自定义模型（YOLO、ViT、DETR 等）请使用 Python API。
 
 ### `cvlab weights`
 
@@ -342,71 +375,74 @@ data:
 
 ---
 
-## 配置文件参考
+## Python API — CV 专项功能
 
-### 完整配置选项
+除了基本的指标记录和梯度监控，CVLab 的 Tracker API 提供了 CV 领域的专项可视化能力：
 
-```yaml
-# 模型
-model:
-  name: resnet18                # 模型名称 (支持 torchvision.models 中的分类模型)
-  pretrained: false             # 是否加载 ImageNet 预训练权重
-  pretrained_weights: null      # 自定义权重路径（优先级高于 pretrained）
-  output_classes: 10            # 分类数（默认根据数据集自动确定）
+### 混淆矩阵
 
-# 训练
-training:
-  epochs: 50                    # 训练轮数
-  batch_size: 128               # Batch Size（设为 null 自动探测）
-  optimizer: adam               # sgd | adam | adamw
-  lr: 0.001                     # 学习率
-  weight_decay: 0.0001          # 权重衰减
-  momentum: 0.9                 # SGD 动量（仅 optimizer=sgd 时）
-  scheduler: cosine             # cosine | step | none
-  lr_step_size: 30              # StepLR 步长（仅 scheduler=step 时）
-  lr_gamma: 0.1                 # StepLR 衰减率
-  warmup_epochs: 0              # 学习率预热轮数
-  label_smoothing: 0.0          # 标签平滑
-  gradient_clip: null           # 梯度裁剪最大范数
-  early_stop_patience: null     # 早停耐心值
-  amp: false                    # 是否启用自动混合精度
-
-# 数据
-data:
-  dataset_name: CIFAR10         # 数据集名称
-  dataset: ./data               # 数据集根路径（自动下载到该路径）
-  input_size: [3, 32, 32]       # 输入尺寸 [C, H, W]
-  num_workers: 2                # DataLoader 工作进程数
-  val_split: 0.1                # 验证集比例（自动划分）
-  augment: true                 # 是否使用数据增强
-  pin_memory: true              # DataLoader pin_memory
-  persistent_workers: false     # DataLoader persistent_workers
-
-# 日志
-logging:
-  log_interval: 10              # 指标记录间隔（步数）
-  grad_log_freq: 50             # 梯度范数记录间隔
-  save_checkpoint: true         # 是否保存 Checkpoint
-  checkpoint_top_k: 3           # 最多保留的最佳 Checkpoint 数
-  log_images: false             # 是否记录预测样本图片
-
-# 实验
-seed: 42                        # 随机种子
-name: null                      # 实验名称（自动生成）
-tags: []                        # 标签列表
-notes: ""                       # 备注
+```python
+tracker.log_confusion_matrix(
+    y_true=[0, 1, 2, 1, 0],
+    y_pred=[0, 1, 1, 1, 0],
+    class_names=["cat", "dog", "bird"],
+    step=epoch,
+    normalize=True,   # 按行归一化为百分比
+)
 ```
 
-### 配置模板
+自动保存到 Artifacts，在 Streamlit UI 和 HTML 报告中可查看。
 
-`examples/` 目录包含多个配置模板：
+### 检测框可视化
 
-| 文件 | 说明 |
-|------|------|
-| `cifar10.yaml` | 最小 CIFAR10 配置 |
-| `cifar10_full.yaml` | 完整 CIFAR10 配置（带注释） |
-| `tiny_cnn.yaml` | 极简 CNN 配置（快速调试用） |
-| `imagenet_style.yaml` | ImageNet 风格大模型配置 |
+```python
+import numpy as np
+
+tracker.log_detection(
+    key="val_detections",
+    image=image_np,                          # (H, W, 3)
+    boxes=np.array([[10, 20, 100, 200], ...]),  # (N, 4), [x1, y1, x2, y2]
+    scores=np.array([0.95, 0.87, ...]),      # (N,)
+    labels=np.array([0, 1, ...]),            # (N,)
+    class_names=["person", "car", ...],
+    step=epoch,
+    score_threshold=0.5,                     # 低于此阈值的框不绘制
+)
+```
+
+### 分割掩码叠加
+
+```python
+tracker.log_segmentation(
+    key="val_seg",
+    image=image_np,        # (H, W, 3)
+    pred_mask=pred_mask,   # (H, W), 值 > 0 为前景
+    step=epoch,
+    gt_mask=gt_mask,       # (H, W), 可选，以红色叠加显示
+    alpha=0.5,             # mask 透明度
+)
+```
+
+### 完整示例
+
+更多 CV 专项示例见 `examples/quickstart.py`。
+
+---
+
+## 关于模型支持
+
+`cvlab train` 和 `cvlab profile` 的 CLI 命令目前支持 `torchvision.models` 中的分类模型（resnet、densenet、mobilenet、efficientnet 等）。
+
+**如果你使用自定义模型**（YOLO、ViT、DETR、UNet 等），请使用 Python API：
+
+```python
+from cvlab import Tracker
+
+tracker = Tracker(config={...})
+# Tracker 接受任意 nn.Module，无需继承 CVLab 基类
+monitor = tracker.watch(model, log_gradients=True)
+# ... 正常训练循环
+```
 
 ---
 
@@ -452,9 +488,7 @@ cvlab train --config config.yaml --resume exp_001
 
 ---
 
-## Python API
-
-除了 CLI，CVLab 提供 Python API 供脚本调用：
+## Python API 速览
 
 ```python
 from cvlab import Tracker, seed_everything
@@ -475,6 +509,15 @@ tracker.log({"train/loss": 0.523, "train/acc": 0.832}, step=epoch)
 
 # 记录图片
 tracker.log_image("pred_samples", image_tensor, step=epoch)
+
+# 记录混淆矩阵
+tracker.log_confusion_matrix(y_true, y_pred, class_names, step=epoch)
+
+# 记录检测框
+tracker.log_detection("detect", img, boxes, scores, labels, class_names, step=epoch)
+
+# 记录分割掩码
+tracker.log_segmentation("seg", img, pred_mask, step=epoch, gt_mask=gt_mask)
 
 # 保存 Checkpoint
 tracker.save_checkpoint(model, optimizer, epoch=epoch,
@@ -523,7 +566,7 @@ pip install -e .
 
 ### Q: CUDA Out of Memory
 
-CVLab 会自动重试（减半 Batch Size）。若仍失败，尝试：
+CVLab 会自动重试（每次减小 20% Batch Size）。若仍失败，尝试：
 - 减小模型规模
 - 减小 `input_size`
 - 启用 `amp: true`（混合精度）
@@ -543,9 +586,12 @@ CVLab 会自动重试（减半 Batch Size）。若仍失败，尝试：
 
 ### Q: 如何对比多个实验？
 
-建议使用 Streamlit UI 进行对比：
 ```bash
-streamlit run cvlab/ui/app.py
+# 方式一：CLI 命令行对比
+cvlab compare exp_001 exp_002 [--metric val/acc]
+
+# 方式二：Streamlit UI 交互式对比
+streamlit run cvlab/ui/app.py  # → Compare 页面
 ```
 
-该 UI 提供实验列表、详情查看、多实验对比等功能。
+CLI 对比输出 Rich 高亮表格，适合终端内快速查看差异。UI 对比提供交互式曲线叠加，适合深度分析。

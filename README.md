@@ -24,8 +24,7 @@
 - [快速开始](#快速开始)
 - [使用示例](#使用示例)
 - [命令参考](#命令参考)
-- [项目结构](#项目结构)
-- [设计原则](#设计原则)
+- [了解更多](#了解更多)
 - [贡献指南](#贡献指南)
 - [许可证](#许可证)
 
@@ -33,7 +32,7 @@
 
 ## 简介
 
-CVLab 是一个轻量级、CV 专精的训练实验管理工具。它不要求你改模型继承、不绑定框架、不部署服务。装一个 `pip install`，加三行代码，就能获得实验追踪、梯度监控、数据分析和超参扫描能力。
+CVLab 是一个轻量级、CV 专精的训练实验管理工具。装一个 `pip install`，加三行代码，就能获得实验追踪、梯度监控、诊断分析和超参扫描能力。
 
 **语言支持**: 中文（默认）| [English](README_EN.md)
 
@@ -41,93 +40,19 @@ CVLab 是一个轻量级、CV 专精的训练实验管理工具。它不要求�
 
 ## 核心特性
 
-<details open>
-<summary><b>📊 实验追踪</b></summary>
+- **📊 实验追踪** — 自动记录指标、图片、混淆矩阵、检测框和分割 Mask。SQLite 持久化，零服务依赖。一键复现命令。
+- **🔌 非侵入式梯度监控** — 基于 PyTorch `register_full_backward_hook` 的采样模式，无需修改模型代码。梯度消失/爆炸自动告警。
+- **🖥️ 环境探针 + 加速诊断** — 自动检测 GPU / CUDA / 存储类型，推荐 6 项训练加速选项（AMP、BF16、torch.compile 等）。
+- **🎯 Batch Size 自动探测** — 二分搜索 + 20% 安全余量，含 OOM 自动恢复机制（每次减小 20%，最多重试 2 次）。
+- **🔍 训练诊断套件** — I/O 瓶颈检测、Loss 异常分析、模型性能画像（FLOPs/参数量/延迟）、超参重要性分析。
 
-- 自动创建实验 ID、固定随机种子、保存环境快照和脚本副本
-- 标量指标记录与 SQLite 持久化（WAL 模式，零依赖）
-- 图片、混淆矩阵、检测框、分割掩码可视化
-- Checkpoint 管理（自动轮转、EMA 权重、best/last 标记）
-- 一键复现命令生成
+> 完整功能列表见 [USAGE.md](USAGE.md)（数据集分析、超参扫描、HTML 报告、可视化 UI 等）。
 
-</details>
+---
 
-<details>
-<summary><b>🔌 非侵入式 Hook 注入</b></summary>
+## 截图
 
-- 基于 `register_full_backward_hook` 采样模式梯度监控
-- 梯度消失/爆炸告警（阈值: vanish < 1e-5, explosion > 10）
-- 支持指定层监控，支持激活值采样
-- 零修改模型代码
-
-</details>
-
-<details>
-<summary><b>🖥️ 环境检测与加速配置</b></summary>
-
-- 自动检测 OS / Python / PyTorch / CUDA 版本
-- GPU 型号、显存、Compute Capability、TensorCore 支持
-- WSL2 检测、CUDA 版本不匹配告警
-- 6 项训练加速选项（AMP FP16、BF16、cuDNN Benchmark、torch.compile、Channels Last、Gradient Checkpointing）
-
-</details>
-
-<details>
-<summary><b>🎯 Batch Size 自动探测</b></summary>
-
-- 二分搜索算法，安全余量 20%
-- 悲观数据注入（最大分辨率 + 密集标签）
-- AMP/BF16 对齐探测
-- 多 GPU 感知
-
-</details>
-
-<details>
-<summary><b>🔍 训练诊断</b></summary>
-
-- **I/O 瓶颈检测**: 分析 DataLoader 加载时间 vs 计算时间，推荐最优 num_workers
-- **Loss 异常检测**: NaN/Inf、爆炸、平台期、突跳、LR 异常
-- **模型性能画像**: FLOPs、参数量、前向/反向延迟、峰值显存
-- **权重加载诊断**: missing/unexpected keys、形状检查、双权重文件差异对比
-
-</details>
-
-<details>
-<summary><b>⚡ 超参扫描</b></summary>
-
-- Grid 搜索（笛卡尔积枚举）
-- Random 搜索（choice/uniform/loguniform/int 四种分布）
-- Trial 管理 + 最佳 Trial 查找
-- 随机森林超参重要性分析
-
-</details>
-
-<details>
-<summary><b>📁 数据集分析</b></summary>
-
-- 类别分布、图片格式统计、尺寸分布、类别平衡度评分
-- 数据血缘追踪（两级：O(1) 根目录快照 + 标注文件 SHA256）
-- 变化检测、快照列表
-
-</details>
-
-<details>
-<summary><b>🌐 可视化 UI</b></summary>
-
-- Streamlit 多页面（实验列表、详情、对比、Sweep、环境诊断）
-- Plotly 交互式指标曲线叠加
-- 语言切换（中文 / English）
-- 深色模式支持
-
-</details>
-
-<details>
-<summary><b>📄 报告生成</b></summary>
-
-- 自包含 HTML 报告（Jinja2 模板）
-- 超参、环境、指标、Checkpoints、复现命令
-
-</details>
+> *界面截图准备中 —— 欢迎贡献！*
 
 ---
 
@@ -269,6 +194,7 @@ streamlit run cvlab/ui/app.py
 | `cvlab diagnose loss <exp_id>` | Loss 异常诊断 |
 | `cvlab diagnose gradient <exp_id>` | 梯度健康诊断 |
 | `cvlab diagnose dataloader <config>` | DataLoader 性能诊断 |
+| `cvlab compare <exp_1> <exp_2> [exp_3...]` | 多实验 CLI 对比（Rich 高亮表格） |
 | `cvlab sweep create --config <yaml>` | 创建超参扫描 |
 | `cvlab sweep analyze <sweep_id>` | 分析超参重要性 |
 | `cvlab profile --model <name>` | 模型性能画像 |

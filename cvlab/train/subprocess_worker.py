@@ -1,15 +1,15 @@
-"""训练子进程 Worker — 由 cvlab train 以 subprocess 方式启动。
+"""Training subprocess worker — launched by `cvlab train` as subprocess.
 
-用法:
+Usage:
     python -m cvlab.train.subprocess_worker \\
         --experiment-id exp_001 \\
         --config /path/to/config.yaml \\
         --batch-size 64
 
-退出码:
-    0  成功
-    1  训练失败（非 OOM 异常）
-    137 CUDA Out of Memory
+Exit codes:
+    0   Success
+    1   Training failure (non-OOM exception)
+    137 CUDA Out of Memory (includes both RuntimeError and system OOM)
 """
 
 from __future__ import annotations
@@ -37,14 +37,23 @@ def main() -> int:
 
     except Exception as e:
         import torch
-        if isinstance(e, torch.cuda.OutOfMemoryError):
-            # CUDA OOM — 退出码 137 对应 SIGKILL
+
+        err_msg = str(e).lower()
+
+        # CUDA OOM detection — covers multiple paths:
+        # 1. torch.cuda.OutOfMemoryError (explicit)
+        # 2. RuntimeError with "CUDA out of memory" in message (most common)
+        # 3. System OOM killer (SIGKILL, exit code 137 from OS)
+        is_oom = isinstance(e, torch.cuda.OutOfMemoryError) or "cuda out of memory" in err_msg
+
+        if is_oom:
             sys.stderr.write("CUDA out of memory\n")
             return 137
-        sys.stderr.write(f"Training failed: {e}\n")
-        import traceback
-        traceback.print_exc(file=sys.stderr)
-        return 1
+        else:
+            sys.stderr.write(f"Training failed: {e}\n")
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+            return 1
 
 
 if __name__ == "__main__":

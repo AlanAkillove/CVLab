@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.2.1 (2026-05-19) — Expert Review Fixes
+
+### New Feature
+- **`cvlab compare` CLI command** — Rich highlighted terminal table for multi-experiment comparison
+  ```bash
+  cvlab compare exp_001 exp_002 --metric val/acc
+  ```
+  Shows config diffs (yellow highlights) and metric summaries in side-by-side format
+
+### Bug Fixes
+- **OOM recovery improvements**:
+  - Batch size reduction changed from halving to 20% (x0.8), less aggressive recovery
+  - Broadened OOM detection: now catches both `torch.cuda.OutOfMemoryError` and `RuntimeError` with "CUDA out of memory" message
+  - Non-OOM errors (exit code 1) correctly bypass retry logic
+- Fixed `%` formatting inconsistency with `_()` in `cli/main.py` — now uses `.format()` uniformly
+- Fixed UI navigation titles not wrapped in `_()` in `app.py`
+- Fixed `Dockerfile.gpu` redundant `python3-pip` install and missing non-root user
+- Fixed `test_report.py` 2 failing tests (outdated `_flatten` references)
+- Updated version to 0.2.1 across `pyproject.toml` and `__init__.py`
+
+### Documentation
+- **README.md/README_EN.md**: Streamlined features to top 5 (was 9 collapsed sections), added screenshot placeholder, added compare to command table, updated ToC
+- **USAGE.md**: 
+  - Added CV-specific Python API examples (confusion matrix, detection, segmentation)
+  - Updated all OOM descriptions to "减小 20%" (was "减半")
+  - Clarified `cvlab data augment` scope (CLI static vs UI interactive)
+  - Added model limitation docs with Python API guidance
+  - Updated FAQ to reference `cvlab compare` CLI command
+- Updated CHANGELOG with v0.2.1 entry
+
 ## 0.2.0 (2026-05-19) — Internationalization & Enterprise Upgrade
 
 ### i18n System (New)
