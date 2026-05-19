@@ -153,7 +153,7 @@ class ProvenanceTracker:
         path = self.provenance_dir / f"{safe_name}.json"
         if not path.exists():
             return None
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
         return DatasetProvenance(**data)
 
@@ -161,7 +161,7 @@ class ProvenanceTracker:
         """列出所有已记录的数据集快照。"""
         results: list[dict[str, Any]] = []
         for f in sorted(self.provenance_dir.glob("*.json")):
-            with open(f, "r", encoding="utf-8") as fh:
+            with open(f, encoding="utf-8") as fh:
                 data = json.load(fh)
             results.append({
                 "path": data.get("path", ""),

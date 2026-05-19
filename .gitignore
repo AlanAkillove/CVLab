@@ -35,8 +35,8 @@ htmlcov/
 .coverage
 coverage.xml
 
-# Temp / data files
-data/
+# Temp / data files (top-level only, not cvlab/data/)
+/data/
 *.data
 *.pt
 *.pth
@@ -50,3 +50,4 @@ examples/data/
 *.log
 *.html
 report_*.html
+__pycache__/

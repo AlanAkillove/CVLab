@@ -6,7 +6,6 @@ from typing import Any
 
 import torch
 import torchvision
-import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
 
@@ -40,7 +39,7 @@ class AugmentPreview:
                 try:
                     result = fn(image, **params)
                     results[name] = result
-                except Exception as e:
+                except Exception:
                     results[name + "_error"] = torch.full_like(image, float("nan"))
         return results
 

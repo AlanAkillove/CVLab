@@ -58,7 +58,9 @@ def main(argv: list[str] | None = None) -> int:
     list_p = sub.add_parser("list", help="List experiments")
     list_p.add_argument("--status", help="Filter by status")
     list_p.add_argument("--tag", help="Filter by tag")
-    list_p.add_argument("--limit", type=int, default=20, help="Maximum count")
+    list_p.add_argument("--limit", type=int, default=100, help="Maximum count")
+    list_p.add_argument("--json", action="store_true", help="Output as JSON")
+    list_p.add_argument("--csv", action="store_true", help="Output as CSV")
     list_p.set_defaults(func=_cmd_list)
 
     # cvlab show
@@ -147,6 +149,8 @@ seed: 42
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
+    import csv
+    import io
     import json
 
     from cvlab.cli.console import console, header, info, result
@@ -157,17 +161,61 @@ def _cmd_list(args: argparse.Namespace) -> int:
     exps = db.list_experiments(status=args.status, tag=args.tag, limit=args.limit)
 
     if not exps:
-        info(_("暂无实验"))
+        if args.json:
+            print("[]")
+        elif args.csv:
+            print("id,name,status,model,created_at")
+        else:
+            info(_("暂无实验"))
         return 0
 
-    header(_("实验列表"))
-    # 每行一条实验，简单对齐格式（避免 Rich 在窄终端上截断 ID）
-    for e in exps:
+    # 解析 model 名
+    def _get_model(e):
         cfg = {}
         from contextlib import suppress
         with suppress(json.JSONDecodeError, TypeError):
             cfg = json.loads(e.get("config_json", "{}")) if isinstance(e.get("config_json"), str) else e.get("config_json", {})
-        model = cfg.get("model", {}).get("name", "")[:12] if isinstance(cfg, dict) else ""
+        return cfg.get("model", {}).get("name", "") if isinstance(cfg, dict) else ""
+
+    # ── JSON 输出 ───────────────────────────────────────
+    if args.json:
+        rows = []
+        for e in exps:
+            rows.append({
+                "id": e["id"],
+                "name": e.get("name", ""),
+                "status": e["status"],
+                "model": _get_model(e),
+                "created_at": e.get("created_at", "")[:19],
+                "seed": e.get("seed"),
+                "failure_reason": e.get("failure_reason"),
+                "notes": e.get("notes", ""),
+            })
+        print(json.dumps(rows, indent=2, ensure_ascii=False))
+        return 0
+
+    # ── CSV 输出 ────────────────────────────────────────
+    if args.csv:
+        output = io.StringIO()
+        writer = csv.writer(output)
+        writer.writerow(["id", "name", "status", "model", "created_at", "seed", "failure_reason"])
+        for e in exps:
+            writer.writerow([
+                e["id"],
+                e.get("name", ""),
+                e["status"],
+                _get_model(e),
+                e.get("created_at", "")[:19],
+                e.get("seed", ""),
+                e.get("failure_reason", ""),
+            ])
+        print(output.getvalue().strip())
+        return 0
+
+    # ── 普通终端输出 ────────────────────────────────────
+    header(_("实验列表"))
+    for e in exps:
+        model = _get_model(e)[:12]
         status_icon = {
             "completed": "[green]*[/green]",
             "failed": "[red]![/red]",

@@ -16,9 +16,11 @@ def cmd_sweep(args: argparse.Namespace) -> int:
         return _cmd_create(args)
     elif args.sweep_command == "analyze":
         return _cmd_analyze(args)
+    elif args.sweep_command == "top":
+        return _cmd_top(args)
     else:
         from cvlab.cli.console import error
-        error(_("请指定 sweep 子命令: create 或 analyze"))
+        error(_("请指定 sweep 子命令: create / analyze / top"))
         return 1
 
 
@@ -99,6 +101,47 @@ def _cmd_analyze(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_top(args: argparse.Namespace) -> int:
+    """显示 Top N trial。"""
+    from rich import box
+    from rich.table import Table
+
+    from cvlab.cli.console import console, header, info, result
+
+    sweeper = Sweeper()
+    top = sweeper.get_top_trials(args.sweep_id, metric_key=args.metric, n=args.n)
+
+    if not top:
+        info(_("没有完成的 trial 或指标数据"))
+        info(_("提示: 确保有 status=completed 的 trial 且记录了指标准备"))
+        return 0
+
+    header(_("Top {} Trials: {}").format(args.n, args.sweep_id))
+    result(_("目标指标"), args.metric)
+
+    t = Table(box=box.ROUNDED, header_style="bold cyan")
+    t.add_column(_("排名"), justify="right")
+    t.add_column("Trial")
+    t.add_column(_("实验 ID"))
+    t.add_column(args.metric, justify="right")
+    t.add_column(_("状态"))
+
+    maximize = "acc" in args.metric or "f1" in args.metric
+    for i, tr in enumerate(top):
+        val = tr["metric_value"]
+        val_str = f"{val:.4f}"
+        rank_str = f"[bold]{'#' + str(i + 1)}[/bold]"
+        t.add_row(
+            rank_str,
+            str(tr["trial_index"]),
+            tr["experiment_id"][:24],
+            f"[green]{val_str}[/green]" if (i == 0) else val_str,
+            "completed",
+        )
+    console.print(t)
+    return 0
+
+
 def add_subparser(sub) -> None:
     p = sub.add_parser("sweep", help=_("超参扫描"))
     sp = p.add_subparsers(dest="sweep_command")
@@ -112,5 +155,10 @@ def add_subparser(sub) -> None:
     analyze_p = sp.add_parser("analyze", help=_("分析 Sweep 超参重要性"))
     analyze_p.add_argument("sweep_id", help="Sweep ID")
     analyze_p.add_argument("--metric", default="val/acc", help=_("目标指标名"))
+
+    top_p = sp.add_parser("top", help=_("显示 Top N Trial"))
+    top_p.add_argument("sweep_id", help="Sweep ID")
+    top_p.add_argument("--metric", default="val/acc", help=_("目标指标名"))
+    top_p.add_argument("-n", type=int, default=5, help=_("返回条数 (默认 5)"))
 
     p.set_defaults(func=cmd_sweep)

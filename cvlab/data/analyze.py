@@ -14,7 +14,6 @@ import os
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -72,7 +71,7 @@ class DatasetAnalyzer:
         files = {f.name for f in root.iterdir() if f.is_file()}
 
         is_cifar10 = cifar10_files.issubset(files) or \
-                     any(f.startswith("data_batch_") for f in files) and "test_batch" in files
+                     (any(f.startswith("data_batch_") for f in files) and "test_batch" in files)
         is_cifar100 = cifar100_files.issubset(files)
 
         if not is_cifar10 and not is_cifar100:

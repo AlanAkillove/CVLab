@@ -120,6 +120,35 @@ class Sweeper:
                 best = {**t, "metric_value": val}
         return best
 
+    def get_top_trials(self, sweep_id: str, metric_key: str = "val/acc",
+                        n: int = 5) -> list[dict[str, Any]]:
+        """获取指定指标 Top N 的 trial。
+
+        Args:
+            sweep_id: Sweep ID。
+            metric_key: 目标指标名。
+            n: 返回条数。
+
+        Returns:
+            按指标排序的 trial 列表，每个包含 trial 信息和 metric_value。
+        """
+        trials = self.get_trials(sweep_id)
+        scored: list[dict[str, Any]] = []
+        for t in trials:
+            exp = self.db.get_experiment(t["experiment_id"])
+            if not exp or exp["status"] != "completed":
+                continue
+            metrics = self.db.get_metrics(t["experiment_id"])
+            values = [m["value"] for m in metrics if m["key"] == metric_key]
+            if not values:
+                continue
+            scored.append({**t, "metric_value": values[-1]})
+
+        # 按指标排序
+        maximize = "acc" in metric_key or "f1" in metric_key
+        scored.sort(key=lambda x: x["metric_value"], reverse=maximize)
+        return scored[:n]
+
     def _prepare_grid(self, params: dict[str, list[Any]]) -> list[dict[str, Any]]:
         """处理 grid 模式参数。"""
         return generate_grid(params)
