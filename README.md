@@ -271,6 +271,53 @@ cvlab/
 
 ---
 
+## 快速部署
+
+### Docker（推荐，零配置）
+
+```bash
+# 拉取镜像
+docker pull ghcr.io/alanakillove/cvlab:latest
+
+# 启动，挂载当前目录为工作空间
+docker run --gpus all -p 8501:8501 -v ${PWD}:/workspace cvlab
+```
+
+然后访问 `http://localhost:8501` 即可使用 Web UI。
+
+### 本地安装
+
+```bash
+# 前提：Python 3.10+，PyTorch 2.0+
+
+# 从源码安装（当前方式）
+git clone https://github.com/AlanAkillove/CVLab.git
+cd CVLab
+pip install -e .
+
+# 初始化
+cvlab init
+```
+
+> PyPI 发布后也支持 `pip install cvlab`（即将上线）。
+
+完整使用指南见 [USAGE.md](USAGE.md)。
+
+## 开发路线图
+
+当前预览版的目标是 v0.3.0（正式发布版本），主要方向：
+
+| 版本 | 主题 |
+|------|------|
+| v0.2.7 | 训练诊断深化（LR Finder / 过拟合预警 / Dead Neurons） |
+| v0.2.8 | 数据工程工具（格式转换 / 切分采样 / 标注质检） |
+| v0.2.9 | 可解释性工具（Grad-CAM / 特征空间 / 难样本挖掘） |
+| v0.2.10 | 实验设计辅助（消融实验 / 模板库 / 目标追踪） |
+| v0.2.11 | 部署与落地（模型压缩 / 推理基准 / 预算估算） |
+| v0.3.0 | 知识积累与协作 + PyPI 发布 |
+
+完整规划详见 [VISION.md](VISION.md)。
+
 ## 贡献指南
 
 感谢你考虑为 CVLab 贡献！

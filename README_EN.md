@@ -1,12 +1,16 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/version-0.2.1-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-0.2.6--preview-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg?style=flat-square" alt="Python">
   <img src="https://img.shields.io/badge/pytorch-2.0%2B-orange.svg?style=flat-square" alt="PyTorch">
   <img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="License">
   <img src="https://img.shields.io/badge/i18n-zh%20%7C%20en-blueviolet.svg?style=flat-square" alt="i18n">
+  <img src="https://img.shields.io/badge/status-preview-yellow.svg?style=flat-square" alt="Preview">
   <br>
   <a href="README.md"><img src="https://img.shields.io/badge/中文-%F0%9F%87%A8%F0%9F%87%B3-white.svg?style=flat-square" alt="ZH"></a>
 </p>
+
+> **v0.2.x Preview** — Features iterate rapidly; API may change before PyPI release.
+> See [VISION.md](VISION.md) for the roadmap.
 
 <h1 align="center">CVLab</h1>
 <p align="center"><b>CV Experiment Management Platform</b> — Let researchers focus on models and data, not engineering chores</p>
@@ -287,6 +291,50 @@ uv run ruff check cvlab/   # Lint check
 ```
 
 ---
+
+## Quick Deploy
+
+### Docker (recommended, zero config)
+
+```bash
+docker pull ghcr.io/alanakillove/cvlab:latest
+docker run --gpus all -p 8501:8501 -v ${PWD}:/workspace cvlab
+```
+
+Then open `http://localhost:8501` for the Web UI.
+
+### Local Install
+
+```bash
+# Prerequisites: Python 3.10+, PyTorch 2.0+
+
+# From source (current method)
+git clone https://github.com/AlanAkillove/CVLab.git
+cd CVLab
+pip install -e .
+
+# Initialize
+cvlab init
+```
+
+> `pip install cvlab` will be available once published to PyPI (coming soon).
+
+Full usage guide at [USAGE.md](USAGE.md).
+
+## Roadmap
+
+The preview targets v0.3.0 (stable release). Planned versions:
+
+| Version | Theme |
+|---------|-------|
+| v0.2.7 | Training Diagnostics (LR Finder / Overfitting / Dead Neurons) |
+| v0.2.8 | Data Engineering (format convert / split / annotation quality) |
+| v0.2.9 | Interpretability (Grad-CAM / feature space / hard examples) |
+| v0.2.10 | Experiment Design (ablation / templates / goal tracking) |
+| v0.2.11 | Deployment (compression / benchmark / budget estimation) |
+| v0.3.0 | Knowledge & Collaboration + PyPI release |
+
+Full roadmap at [VISION.md](VISION.md).
 
 ## License
 

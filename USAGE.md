@@ -2,6 +2,54 @@
 
 CVLab 是一个 CV（计算机视觉）实验管理平台，帮助研究者专注于模型和数据本身，而非工程琐事。
 
+> **v0.2.x 预览版** — 功能在快速迭代中，API 可能有小幅变化。PyPI 发布前稳定锁定。
+
+## 目录
+
+- [安装](#安装)
+  - [依赖说明](#依赖说明)
+- [快速开始](#快速开始)
+  - [1. 初始化](#1-初始化)
+  - [2. 准备训练配置](#2-准备训练配置)
+  - [3. 启动训练](#3-启动训练)
+  - [4. 查看实验](#4-查看实验)
+  - [5. 诊断分析](#5-诊断分析)
+  - [6. 超参扫描](#6-超参扫描)
+  - [7. 多实验对比](#7-多实验对比)
+- [命令参考](#命令参考)
+  - [`cvlab train`](#cvlab-train)
+  - [`cvlab compare`](#cvlab-compare)
+  - [`cvlab list`](#cvlab-list)
+  - [`cvlab show`](#cvlab-show)
+  - [`cvlab diagnose`](#cvlab-diagnose)
+  - [`cvlab data`](#cvlab-data)
+  - [`cvlab profile`](#cvlab-profile)
+  - [`cvlab weights`](#cvlab-weights)
+  - [`cvlab sweep`](#cvlab-sweep)
+  - [`cvlab estimate`](#cvlab-estimate)
+  - [`cvlab init`](#cvlab-init)
+  - [`cvlab ui`](#cvlab-ui)
+  - [`cvlab help`](#cvlab-help)
+- [Python API — CV 专项功能](#python-api--cv-专项功能)
+  - [混淆矩阵](#混淆矩阵)
+  - [检测框可视化](#检测框可视化)
+  - [分割掩码叠加](#分割掩码叠加)
+  - [完整示例](#完整示例)
+- [关于模型支持](#关于模型支持)
+- [训练最佳实践](#训练最佳实践)
+  - [选择 Batch Size](#选择-batch-size)
+  - [监控梯度](#监控梯度)
+  - [恢复中断训练](#恢复中断训练)
+- [Python API 速览](#python-api-速览)
+- [数据存储](#数据存储)
+- [常见问题](#常见问题)
+  - [Q: 提示 ModuleNotFoundError](#q-提示-modulenotfounderror)
+  - [Q: CUDA Out of Memory](#q-cuda-out-of-memory)
+  - [Q: 训练时 DataLoader 成为瓶颈](#q-训练时-dataloader-成为瓶颈)
+  - [Q: 如何复现实验？](#q-如何复现实验)
+  - [Q: 如何对比多个实验？](#q-如何对比多个实验)
+  - [Q: 如何启动 Web UI？](#q-如何启动-web-ui)
+
 ## 安装
 
 ```bash
