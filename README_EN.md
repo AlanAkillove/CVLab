@@ -212,7 +212,11 @@ Open `http://localhost:8501` in your browser. Language switching and dark mode t
 | `cvlab data analyze <path>` | Dataset analysis |
 | `cvlab data check <path>` | Data provenance check |
 | `cvlab data history` | Dataset snapshot history |
+| `cvlab estimate --config <yaml>` | Pre-train time estimation |
 | `cvlab ui [--port] [--lang]` | Launch Web UI |
+| `cvlab list --json` | Export experiments as JSON |
+| `cvlab list --csv` | Export experiments as CSV |
+| `cvlab sweep top <sweep_id>` | Show Top N sweep trials |
 
 ---
 

@@ -202,8 +202,7 @@ def _render_dataset_card(db: Database, ds: dict) -> None:
 
                 if version_rows:
                     df = pd.DataFrame(version_rows)
-                    st.dataframe(df, width='stretch', hide_index=True,
-                                 width='stretch')
+                    st.dataframe(df, width='stretch', hide_index=True)
 
                     # File type breakdown for latest version
                     latest = versions[0]
@@ -228,7 +227,6 @@ def _render_dataset_card(db: Database, ds: dict) -> None:
                             {"Extension": ext, _("数量"): count}
                             for ext, count in sorted(ext_data.items())
                         ])
-                        st.dataframe(ext_df, width='stretch', hide_index=True,
-                                     width='stretch')
+                        st.dataframe(ext_df, width='stretch', hide_index=True)
 
         divider()

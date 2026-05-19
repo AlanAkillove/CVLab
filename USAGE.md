@@ -184,7 +184,17 @@ streamlit run cvlab/ui/app.py
 可选:
   --status <str>    按状态筛选 (created/running/completed/failed/archived)
   --tag <str>       按标签筛选
-  --limit <int>     最大条数 (默认 20)
+  --limit <int>     最大条数 (默认 100)
+  --json            输出 JSON 格式（可管道消费）
+  --csv             输出 CSV 格式（可导入 Excel）
+```
+
+```bash
+# JSON 输出
+cvlab list --json | jq '.[].id'
+
+# CSV 输出
+cvlab list --csv > experiments.csv
 ```
 
 ### `cvlab show`
@@ -355,6 +365,43 @@ data:
 - 关键超参建议
 - 联合调优建议
 
+**top 子命令**（v0.2.5 新增）显示 Sweep 中指标最优的 N 个 trial：
+```
+cvlab sweep top <sweep_id> [--metric val/acc] [-n 5]
+```
+输出 Rich 排名表格，第一名绿色高亮。用于快速找到最佳参数组合。
+
+### `cvlab estimate`
+
+预计算训练耗时（v0.2.5 新增）。
+
+```
+用法: cvlab estimate --config <yaml> [options]
+
+必选:
+  --config, -c <path>    配置文件路径 (YAML)
+
+可选:
+  --batches <int>        采样 batch 数 (默认 5，含预热)
+  --batch-size <int>     覆盖 Batch Size
+  --epochs <int>         覆盖训练轮数
+  --cpu                  强制使用 CPU
+```
+
+在正式训练前跑少量 batch，估算每 epoch 时间和总耗时，
+帮助判断当前配置是否值得跑完。输出：
+- 平均每 batch 时间（数据加载 vs 计算 分解）
+- 吞吐量（samples/sec）
+- 每 epoch 估算时间
+- 总耗时（按配置的 epochs）
+- 峰值显存
+- DataLoader 瓶颈检测（数据加载占比 > 50% 时告警）
+
+```bash
+cvlab estimate --config examples/tiny_cnn.yaml
+cvlab estimate --config config.yaml --batches 3 --epochs 100
+```
+
 ### `cvlab init`
 
 在当前目录初始化 CVLab 存储。
@@ -363,7 +410,7 @@ data:
 用法: cvlab init
 ```
 
-创建 `.cvlab/` 目录用于存放 SQLite 数据库、Checkpoints、Artifacts。
+创建 `.cvlab/` 目录（含默认 `config.yaml` 模板）用于存放 SQLite 数据库、Checkpoints、Artifacts。
 
 ### `cvlab ui`
 

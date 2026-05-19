@@ -218,7 +218,11 @@ cvlab ui --port 8502 --lang en
 | `cvlab data analyze <path>` | 数据集分析 |
 | `cvlab data check <path>` | 数据血缘检查 |
 | `cvlab data history` | 数据集快照历史 |
+| `cvlab estimate --config <yaml>` | 预计算训练耗时 |
 | `cvlab ui [--port] [--lang]` | 启动 Web 界面 |
+| `cvlab list --json` | 以 JSON 格式导出实验列表 |
+| `cvlab list --csv` | 以 CSV 格式导出实验列表 |
+| `cvlab sweep top <sweep_id>` | 查看 Sweep Top N Trial |
 
 ---
 
